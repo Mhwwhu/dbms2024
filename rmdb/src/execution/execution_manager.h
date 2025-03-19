@@ -27,8 +27,13 @@ See the Mulan PSL v2 for more details. */
 #include "optimizer/planner.h"
 
 class Planner;
-
-class QlManager {
+/**
+ * Query Language Manager
+ * 是执行引擎中的“执行控制中心”，主要负责协调不同类型的 SQL 查询。
+ * 它应该处于 查询计划完成后、执行器启动前 的阶段，负责把 Plan 计划交给合适的执行逻辑去跑。
+ * by zxr
+ */
+class QlManager { 
    private:
     SmManager *sm_manager_;
     TransactionManager *txn_mgr_;

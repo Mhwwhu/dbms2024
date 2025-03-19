@@ -38,14 +38,32 @@ class Planner {
 
 
     std::shared_ptr<Plan> do_planner(std::shared_ptr<Query> query, Context *context);
-
+    
+    /**
+     * 表示是否启用嵌套循环连接
+     * added by zxr
+     */
     void set_enable_nestedloop_join(bool set_val) { enable_nestedloop_join = set_val; }
     
+    /**
+     * 设置是否启用排序合并连接
+     * added by zxr
+     */
     void set_enable_sortmerge_join(bool set_val) { enable_sortmerge_join = set_val; }
     
    private:
-    std::shared_ptr<Query> logical_optimization(std::shared_ptr<Query> query, Context *context);
-    std::shared_ptr<Plan> physical_optimization(std::shared_ptr<Query> query, Context *context);
+
+    /**
+     * todo
+     * added by zxr
+     */
+     std::shared_ptr<Query> logical_optimization(std::shared_ptr<Query> query, Context *context);
+    
+     /**
+     * todo
+     * added by zxr
+     */
+     std::shared_ptr<Plan> physical_optimization(std::shared_ptr<Query> query, Context *context);
 
     std::shared_ptr<Plan> make_one_rel(std::shared_ptr<Query> query);
 

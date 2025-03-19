@@ -138,7 +138,9 @@ std::shared_ptr<Plan> Planner::physical_optimization(std::shared_ptr<Query> quer
 }
 
 
-
+/**
+ * 没考虑joinTree
+ */
 std::shared_ptr<Plan> Planner::make_one_rel(std::shared_ptr<Query> query)
 {
     auto x = std::dynamic_pointer_cast<ast::SelectStmt>(query->parse);
@@ -277,6 +279,7 @@ std::shared_ptr<Plan> Planner::generate_sort_plan(std::shared_ptr<Query> query, 
     }
     TabCol sel_col;
     for (auto &col : all_cols) {
+        //找需要排序的列
         if(col.name.compare(x->order->cols->col_name) == 0 )
         sel_col = {.tab_name = col.tab_name, .col_name = col.name};
     }

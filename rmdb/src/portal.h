@@ -29,8 +29,8 @@ typedef enum portalTag{
     PORTAL_Invalid_Query = 0,
     PORTAL_ONE_SELECT,
     PORTAL_DML_WITHOUT_SELECT,
-    PORTAL_MULTI_QUERY,
-    PORTAL_CMD_UTILITY
+    PORTAL_MULTI_QUERY, //DDL
+    PORTAL_CMD_UTILITY //特殊的指令
 } portalTag;
 
 

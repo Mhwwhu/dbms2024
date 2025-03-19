@@ -98,6 +98,11 @@ void Analyze::get_all_cols(const std::vector<std::string> &tab_names, std::vecto
     }
 }
 
+/**
+ * 对每个条件表达式（sv_conds），将其左操作数和右操作数（可以是列或常量）提取出来
+ * 如果右操作数是列，调用 check_column 来确保列名的正确性。
+ * added by zxr
+ */
 void Analyze::get_clause(const std::vector<std::shared_ptr<ast::BinaryExpr>> &sv_conds, std::vector<Condition> &conds) {
     conds.clear();
     for (auto &expr : sv_conds) {
@@ -115,6 +120,11 @@ void Analyze::get_clause(const std::vector<std::shared_ptr<ast::BinaryExpr>> &sv
     }
 }
 
+/**
+ * 先检查左右操作数(字句)的字段是否存在于table中
+ * 再检查左右操作数类型，要求一致才行
+ * added by zxr
+ */
 void Analyze::check_clause(const std::vector<std::string> &tab_names, std::vector<Condition> &conds) {
     // auto all_cols = get_all_cols(tab_names);
     std::vector<ColMeta> all_cols;
