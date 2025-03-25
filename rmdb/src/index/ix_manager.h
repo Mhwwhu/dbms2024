@@ -111,6 +111,7 @@ class IxManager {
             disk_manager_->write_page(fd, IX_LEAF_HEADER_PAGE, page_buf, PAGE_SIZE);
         }
         // 注意root node页号为2，也标记为叶子结点，其前一个/后一个叶子均指向leaf header
+        
         // Create root node and write to file
         {
             memset(page_buf, 0, PAGE_SIZE);

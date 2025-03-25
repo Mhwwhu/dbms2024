@@ -15,12 +15,19 @@ See the Mulan PSL v2 for more details. */
 #include "defs.h"
 #include "storage/buffer_pool_manager.h"
 
+// constexpr int IX_NO_PAGE = -1;         // 表示无效页面号
+// constexpr int IX_FILE_HDR_PAGE = 0;     // 文件头所在的页号
+// constexpr int IX_LEAF_HEADER_PAGE = 1;  // 叶子节点头页号
+// constexpr int IX_INIT_ROOT_PAGE = 2;    // 初始根节点页号
+// constexpr int IX_INIT_NUM_PAGES = 3;    // 初始页数量
+// constexpr int IX_MAX_COL_LEN = 512;     // 单列最大长度
+
 constexpr int IX_NO_PAGE = -1;
 constexpr int IX_FILE_HDR_PAGE = 0;
 constexpr int IX_LEAF_HEADER_PAGE = 1;
 constexpr int IX_INIT_ROOT_PAGE = 2;
 constexpr int IX_INIT_NUM_PAGES = 3;
-constexpr int IX_MAX_COL_LEN = 512;
+constexpr int IX_MAX_COL_LEN = 512; 
 
 class IxFileHdr {
 public: 

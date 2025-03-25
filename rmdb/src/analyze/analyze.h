@@ -36,7 +36,6 @@ class Query{
     std::vector<Value> values;
 
     Query(){}
-
 };
 
 class Analyze
