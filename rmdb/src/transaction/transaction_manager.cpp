@@ -26,8 +26,18 @@ Transaction * TransactionManager::begin(Transaction* txn, LogManager* log_manage
     // 2. 如果为空指针，创建新事务
     // 3. 把开始事务加入到全局事务表中
     // 4. 返回当前事务指针
+
+    // test: 这里需要设计事务id的分发策略，可能需要存储最后一次分发的事务id。目前从0开始递增分配，一切操作不落盘。
+    if(txn == nullptr) {
+        txn = new Transaction(next_txn_id_);
+        next_txn_id_++;
+        log_manager->add_log_to_buffer(nullptr);
+    }
+
+    txn_map[txn->get_transaction_id()] = txn;
+    txn->set_state(TransactionState::DEFAULT);
     
-    return nullptr;
+    return txn;
 }
 
 /**
