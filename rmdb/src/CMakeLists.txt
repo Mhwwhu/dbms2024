@@ -4,7 +4,7 @@ add_subdirectory(analyze)
 add_subdirectory(record)
 add_subdirectory(index)
 add_subdirectory(system)
-add_subdirectory(execution)
+add_subdirectory(executor)
 add_subdirectory(parser)
 add_subdirectory(optimizer)
 add_subdirectory(storage)
@@ -12,13 +12,22 @@ add_subdirectory(common)
 add_subdirectory(replacer)
 add_subdirectory(transaction)
 add_subdirectory(recovery)
+add_subdirectory(expression)
+add_subdirectory(tuple)
+add_subdirectory(plan)
+add_subdirectory(operator)
 add_subdirectory(test)
 
+set(SOURCES portal.cpp)
 
-target_link_libraries(parser execution pthread)
+add_library(portal STATIC ${SOURCES})
+
+target_link_libraries(portal executor)
+
+target_link_libraries(parser pthread)
 
 add_executable(rmdb rmdb.cpp)
-target_link_libraries(rmdb parser execution readline pthread planner analyze)
+target_link_libraries(rmdb parser readline pthread plan analyze common transaction portal optimizer)
 
 # unit_test
 add_executable(unit_test unit_test.cpp)

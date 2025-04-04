@@ -16,8 +16,8 @@ See the Mulan PSL v2 for more details. */
 #include <string>
 #include <vector>
 
-#include "execution/execution_defs.h"
-#include "execution/execution_manager.h"
+#include "execution_bak/execution_defs.h"
+#include "execution_bak/execution_manager.h"
 #include "record/rm.h"
 #include "system/sm.h"
 #include "common/context.h"
@@ -25,6 +25,8 @@ See the Mulan PSL v2 for more details. */
 #include "parser/parser.h"
 #include "common/common.h"
 #include "analyze/analyze.h"
+#include "analyze/stmt/stmt.h"
+#include "analyze/stmt/create_table_stmt.h"
 
 class Planner {
    private:
@@ -37,7 +39,9 @@ class Planner {
     Planner(SmManager *sm_manager) : sm_manager_(sm_manager) {}
 
 
-    std::shared_ptr<Plan> do_planner(std::shared_ptr<Query> query, Context *context);
+    std::shared_ptr<Plan> do_planner(std::shared_ptr<IStmt> stmt, Context *context);
+
+    RC do_planner(std::shared_ptr<IStmt> stmt, Context* context, std::shared_ptr<Plan>& plan);
     
     /**
      * 表示是否启用嵌套循环连接
@@ -53,31 +57,33 @@ class Planner {
     
    private:
 
+   RC create_plan(std::shared_ptr<CreateTableStmt> stmt, std::shared_ptr<Plan>& plan);
+
     /**
      * todo
      * added by zxr
      */
-     std::shared_ptr<Query> logical_optimization(std::shared_ptr<Query> query, Context *context);
+     std::shared_ptr<IStmt> logical_optimization(std::shared_ptr<IStmt> query, Context *context);
     
      /**
      * todo
      * added by zxr
      */
-     std::shared_ptr<Plan> physical_optimization(std::shared_ptr<Query> query, Context *context);
+     std::shared_ptr<Plan> physical_optimization(std::shared_ptr<IStmt> query, Context *context);
 
-    std::shared_ptr<Plan> make_one_rel(std::shared_ptr<Query> query);
+    std::shared_ptr<Plan> make_one_rel(std::shared_ptr<IStmt> query);
 
-    std::shared_ptr<Plan> generate_sort_plan(std::shared_ptr<Query> query, std::shared_ptr<Plan> plan);
+    std::shared_ptr<Plan> generate_sort_plan(std::shared_ptr<IStmt> query, std::shared_ptr<Plan> plan);
     
-    std::shared_ptr<Plan> generate_select_plan(std::shared_ptr<Query> query, Context *context);
+    std::shared_ptr<Plan> generate_select_plan(std::shared_ptr<IStmt> query, Context *context);
 
 
     // int get_indexNo(std::string tab_name, std::vector<Condition> curr_conds);
     bool get_index_cols(std::string tab_name, std::vector<Condition> curr_conds, std::vector<std::string>& index_col_names);
 
-    ColType interp_sv_type(ast::SvType sv_type) {
-        std::map<ast::SvType, ColType> m = {
-            {ast::SV_TYPE_INT, TYPE_INT}, {ast::SV_TYPE_FLOAT, TYPE_FLOAT}, {ast::SV_TYPE_STRING, TYPE_STRING}};
-        return m.at(sv_type);
-    }
+    // AttrType interp_sv_type(ast::SvType sv_type) {
+    //     std::map<ast::SvType, AttrType> m = {
+    //         {ast::SV_TYPE_INT, AttrType::INTS}, {ast::SV_TYPE_FLOAT, AttrType::FLOATS}, {ast::SV_TYPE_STRING, AttrType::CHARS}};
+    //     return m.at(sv_type);
+    // }
 };

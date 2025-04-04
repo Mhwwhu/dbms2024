@@ -35,7 +35,7 @@ public:
     int num_pages_;                     // 磁盘文件中页面的数量
     page_id_t root_page_;               // B+树根节点对应的页面号
     int col_num_;                       // 索引包含的字段数量
-    std::vector<ColType> col_types_;    // 字段的类型
+    std::vector<AttrType> col_types_;    // 字段的类型
     std::vector<int> col_lens_;         // 字段的长度
     int col_tot_len_;                   // 索引包含的字段的总长度
     int btree_order_;                   // # children per page 每个结点最多可插入的键值对数量
@@ -59,7 +59,7 @@ public:
     void update_tot_len() {
         tot_len_ = 0;
         tot_len_ += sizeof(page_id_t) * 4 + sizeof(int) * 6;
-        tot_len_ += sizeof(ColType) * col_num_ + sizeof(int) * col_num_;
+        tot_len_ += sizeof(AttrType) * col_num_ + sizeof(int) * col_num_;
     }
 
     void serialize(char* dest) {
@@ -75,8 +75,8 @@ public:
         memcpy(dest + offset, &col_num_, sizeof(int));
         offset += sizeof(int);
         for(int i = 0; i < col_num_; ++i) {
-            memcpy(dest + offset, &col_types_[i], sizeof(ColType));
-            offset += sizeof(ColType);
+            memcpy(dest + offset, &col_types_[i], sizeof(AttrType));
+            offset += sizeof(AttrType);
         }
         for(int i = 0; i < col_num_; ++i) {
             memcpy(dest + offset, &col_lens_[i], sizeof(int));
@@ -109,9 +109,9 @@ public:
         offset += sizeof(int);
         std::cout << col_num_ << "\n";
         for(int i = 0; i < col_num_; ++i) {
-            // col_types_[i] = *reinterpret_cast<const ColType*>(src + offset);
-            ColType type = *reinterpret_cast<const ColType*>(src + offset);
-            offset += sizeof(ColType);
+            // col_types_[i] = *reinterpret_cast<const AttrType*>(src + offset);
+            AttrType type = *reinterpret_cast<const AttrType*>(src + offset);
+            offset += sizeof(AttrType);
             col_types_.push_back(type);
         }
         for(int i = 0; i < col_num_; ++i) {

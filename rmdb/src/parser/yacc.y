@@ -114,7 +114,7 @@ dbStmt:
 setStmt:
         SET set_knob_type '=' VALUE_BOOL
     {
-        $$ = std::make_shared<SetStmt>($2, $4);
+        $$ = std::make_shared<SetNode>($2, $4);
     }
     ;
 
@@ -144,19 +144,19 @@ ddl:
 dml:
         INSERT INTO tbName VALUES '(' valueList ')'
     {
-        $$ = std::make_shared<InsertStmt>($3, $6);
+        $$ = std::make_shared<InsertNode>($3, $6);
     }
     |   DELETE FROM tbName optWhereClause
     {
-        $$ = std::make_shared<DeleteStmt>($3, $4);
+        $$ = std::make_shared<DeleteNode>($3, $4);
     }
     |   UPDATE tbName SET setClauses optWhereClause
     {
-        $$ = std::make_shared<UpdateStmt>($2, $4, $5);
+        $$ = std::make_shared<UpdateNode>($2, $4, $5);
     }
     |   SELECT selector FROM tableList optWhereClause opt_order_clause
     {
-        $$ = std::make_shared<SelectStmt>($2, $4, $5, $6);
+        $$ = std::make_shared<SelectNode>($2, $4, $5, $6);
     }
     ;
 
@@ -185,22 +185,22 @@ colNameList:
 field:
         colName type
     {
-        $$ = std::make_shared<ColDef>($1, $2);
+        $$ = std::make_shared<Field>($1, $2);
     }
     ;
 
 type:
         INT
     {
-        $$ = std::make_shared<TypeLen>(SV_TYPE_INT, sizeof(int));
+        $$ = std::make_shared<TypeLen>(AttrType::INTS, sizeof(int));
     }
     |   CHAR '(' VALUE_INT ')'
     {
-        $$ = std::make_shared<TypeLen>(SV_TYPE_STRING, $3);
+        $$ = std::make_shared<TypeLen>(AttrType::CHARS, $3);
     }
     |   FLOAT
     {
-        $$ = std::make_shared<TypeLen>(SV_TYPE_FLOAT, sizeof(float));
+        $$ = std::make_shared<TypeLen>(AttrType::FLOATS, sizeof(float));
     }
     ;
 

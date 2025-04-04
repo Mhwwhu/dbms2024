@@ -18,6 +18,7 @@ See the Mulan PSL v2 for more details. */
 #include "index/ix.h"
 #include "record/rm.h"
 #include "record_printer.h"
+#include "common/type/attr_type.h"
 
 /**
  * @description: 判断是否为一个文件夹
@@ -141,7 +142,7 @@ void SmManager::desc_table(const std::string& tab_name, Context* context) {
     printer.print_separator(context);
     // Print fields
     for (auto &col : tab.cols) {
-        std::vector<std::string> field_info = {col.name, coltype2str(col.type), col.index ? "YES" : "NO"};
+        std::vector<std::string> field_info = {col.name, attr_type_to_string(col.type), col.index ? "YES" : "NO"};
         printer.print_record(field_info, context);
     }
     // Print footer

@@ -20,19 +20,19 @@ static const bool binary_search = false;
 /**
  * 单列的相等比较
  */
-inline int ix_compare(const char *a, const char *b, ColType type, int col_len) {
+inline int ix_compare(const char *a, const char *b, AttrType type, int col_len) {
     switch (type) {
-        case TYPE_INT: {
+        case AttrType::INTS: {
             int ia = *(int *)a;
             int ib = *(int *)b;
             return (ia < ib) ? -1 : ((ia > ib) ? 1 : 0);
         }
-        case TYPE_FLOAT: {
+        case AttrType::FLOATS: {
             float fa = *(float *)a;
             float fb = *(float *)b;
             return (fa < fb) ? -1 : ((fa > fb) ? 1 : 0);
         }
-        case TYPE_STRING:
+        case AttrType::CHARS:
             return memcmp(a, b, col_len);
         default:
             throw InternalError("Unexpected data type");
@@ -42,7 +42,7 @@ inline int ix_compare(const char *a, const char *b, ColType type, int col_len) {
 /**
  * 多列的相等比较
  */
-inline int ix_compare(const char* a, const char* b, const std::vector<ColType>& col_types, const std::vector<int>& col_lens) {
+inline int ix_compare(const char* a, const char* b, const std::vector<AttrType>& col_types, const std::vector<int>& col_lens) {
     int offset = 0;
     for(size_t i = 0; i < col_types.size(); ++i) {
         int res = ix_compare(a + offset, b + offset, col_types[i], col_lens[i]);

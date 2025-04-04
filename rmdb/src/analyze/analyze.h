@@ -19,24 +19,26 @@ See the Mulan PSL v2 for more details. */
 #include "parser/parser.h"
 #include "system/sm.h"
 #include "common/common.h"
+#include "common/rc.h"
+#include "stmt/stmt.h"
 
-class Query{
-    public:
-    std::shared_ptr<ast::TreeNode> parse;
-    // TODO jointree
-    // where条件
-    std::vector<Condition> conds;
-    // 投影列
-    std::vector<TabCol> cols;
-    // 表名
-    std::vector<std::string> tables;
-    // update 的set 值
-    std::vector<SetClause> set_clauses;
-    //insert 的values值
-    std::vector<Value> values;
+// class Query{
+//     public:
+//     std::shared_ptr<ast::TreeNode> parse;
+//     // TODO jointree
+//     // where条件
+//     std::vector<Condition> conds;
+//     // 投影列
+//     std::vector<TabCol> cols;
+//     // 表名
+//     std::vector<std::string> tables;
+//     // update 的set 值
+//     std::vector<SetClause> set_clauses;
+//     //insert 的values值
+//     std::vector<Value> values;
 
-    Query(){}
-};
+//     Query(){}
+// };
 
 class Analyze
 {
@@ -46,9 +48,13 @@ public:
     Analyze(SmManager *sm_manager) : sm_manager_(sm_manager){}
     ~Analyze(){}
 
-    std::shared_ptr<Query> do_analyze(std::shared_ptr<ast::TreeNode> root);
+    std::shared_ptr<IStmt> do_analyze(std::shared_ptr<ast::TreeNode> root);
+
+    RC handle_request(Context* context);
 
 private:
+    RC do_analyze(std::shared_ptr<ast::TreeNode> root, std::shared_ptr<IStmt>& stmt);
+
     TabCol check_column(const std::vector<ColMeta> &all_cols, TabCol target);
     void get_all_cols(const std::vector<std::string> &tab_names, std::vector<ColMeta> &all_cols);
     void get_clause(const std::vector<std::shared_ptr<ast::BinaryExpr>> &sv_conds, std::vector<Condition> &conds);

@@ -14,13 +14,12 @@ See the Mulan PSL v2 for more details. */
 #include "record/rm_file_handle.h"
 #include "sm_defs.h"
 #include "sm_meta.h"
-#include "common/context.h"
 
 class Context;
 
 struct ColDef {
     std::string name;  // Column name
-    ColType type;      // Type of column
+    AttrType type;      // Type of column
     int len;           // Length of column
 };
 

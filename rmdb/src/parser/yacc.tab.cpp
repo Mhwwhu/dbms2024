@@ -1713,7 +1713,7 @@ yyreduce:
   case 16: /* setStmt: SET set_knob_type '=' VALUE_BOOL  */
 #line 116 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
     {
-        (yyval.sv_node) = std::make_shared<SetStmt>((yyvsp[-2].sv_setKnobType), (yyvsp[0].sv_bool));
+        (yyval.sv_node) = std::make_shared<SetNode>((yyvsp[-2].sv_setKnobType), (yyvsp[0].sv_bool));
     }
 #line 1719 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
     break;
@@ -1761,7 +1761,7 @@ yyreduce:
   case 22: /* dml: INSERT INTO tbName VALUES '(' valueList ')'  */
 #line 146 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
     {
-        (yyval.sv_node) = std::make_shared<InsertStmt>((yyvsp[-4].sv_str), (yyvsp[-1].sv_vals));
+        (yyval.sv_node) = std::make_shared<InsertNode>((yyvsp[-4].sv_str), (yyvsp[-1].sv_vals));
     }
 #line 1767 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
     break;
@@ -1769,7 +1769,7 @@ yyreduce:
   case 23: /* dml: DELETE FROM tbName optWhereClause  */
 #line 150 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
     {
-        (yyval.sv_node) = std::make_shared<DeleteStmt>((yyvsp[-1].sv_str), (yyvsp[0].sv_conds));
+        (yyval.sv_node) = std::make_shared<DeleteNode>((yyvsp[-1].sv_str), (yyvsp[0].sv_conds));
     }
 #line 1775 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
     break;
@@ -1777,7 +1777,7 @@ yyreduce:
   case 24: /* dml: UPDATE tbName SET setClauses optWhereClause  */
 #line 154 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
     {
-        (yyval.sv_node) = std::make_shared<UpdateStmt>((yyvsp[-3].sv_str), (yyvsp[-1].sv_set_clauses), (yyvsp[0].sv_conds));
+        (yyval.sv_node) = std::make_shared<UpdateNode>((yyvsp[-3].sv_str), (yyvsp[-1].sv_set_clauses), (yyvsp[0].sv_conds));
     }
 #line 1783 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
     break;
@@ -1785,7 +1785,7 @@ yyreduce:
   case 25: /* dml: SELECT selector FROM tableList optWhereClause opt_order_clause  */
 #line 158 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
     {
-        (yyval.sv_node) = std::make_shared<SelectStmt>((yyvsp[-4].sv_cols), (yyvsp[-2].sv_strs), (yyvsp[-1].sv_conds), (yyvsp[0].sv_orderby));
+        (yyval.sv_node) = std::make_shared<SelectNode>((yyvsp[-4].sv_cols), (yyvsp[-2].sv_strs), (yyvsp[-1].sv_conds), (yyvsp[0].sv_orderby));
     }
 #line 1791 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
     break;
@@ -1825,7 +1825,7 @@ yyreduce:
   case 30: /* field: colName type  */
 #line 187 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
     {
-        (yyval.sv_field) = std::make_shared<ColDef>((yyvsp[-1].sv_str), (yyvsp[0].sv_type_len));
+        (yyval.sv_field) = std::make_shared<Field>((yyvsp[-1].sv_str), (yyvsp[0].sv_type_len));
     }
 #line 1831 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
     break;
@@ -1833,7 +1833,7 @@ yyreduce:
   case 31: /* type: INT  */
 #line 194 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
     {
-        (yyval.sv_type_len) = std::make_shared<TypeLen>(SV_TYPE_INT, sizeof(int));
+        (yyval.sv_type_len) = std::make_shared<TypeLen>(AttrType::INTS, sizeof(int));
     }
 #line 1839 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
     break;
@@ -1841,7 +1841,7 @@ yyreduce:
   case 32: /* type: CHAR '(' VALUE_INT ')'  */
 #line 198 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
     {
-        (yyval.sv_type_len) = std::make_shared<TypeLen>(SV_TYPE_STRING, (yyvsp[-1].sv_int));
+        (yyval.sv_type_len) = std::make_shared<TypeLen>(AttrType::CHARS, (yyvsp[-1].sv_int));
     }
 #line 1847 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
     break;
@@ -1849,7 +1849,7 @@ yyreduce:
   case 33: /* type: FLOAT  */
 #line 202 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
     {
-        (yyval.sv_type_len) = std::make_shared<TypeLen>(SV_TYPE_FLOAT, sizeof(float));
+        (yyval.sv_type_len) = std::make_shared<TypeLen>(AttrType::FLOATS, sizeof(float));
     }
 #line 1855 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
     break;

@@ -570,7 +570,7 @@ static const char *const yytname[] =
   "UPDATE", "SET", "SELECT", "INT", "CHAR", "FLOAT", "INDEX", "AND",
   "JOIN", "EXIT", "HELP", "LEQ", "NEQ", "GEQ", "T_EOF", "IDENTIFIER",
   "VALUE_STRING", "VALUE_INT", "VALUE_FLOAT", "';'", "'('", "')'", "','",
-  "'.'", "'='", "'<'", "'>'", "'*'", "$accept", "start", "stmt", "dbStmt",
+  "'.'", "'='", "'<'", "'>'", "'*'", "$accept", "start", "stmt", "dbNode",
   "ddl", "dml", "fieldList", "field", "type", "valueList", "value",
   "condition", "optWhereClause", "whereClause", "col", "colList", "op",
   "expr", "setClauses", "setClause", "selector", "tableList", "tbName",
@@ -1607,7 +1607,7 @@ yyreduce:
   case 15:
 #line 114 "yacc.y"
     {
-        (yyval.sv_node) = std::make_shared<InsertStmt>((yyvsp[-4].sv_str), (yyvsp[-1].sv_vals));
+        (yyval.sv_node) = std::make_shared<InsertNode>((yyvsp[-4].sv_str), (yyvsp[-1].sv_vals));
     }
 #line 1613 "yacc.tab.c"
     break;
@@ -1615,7 +1615,7 @@ yyreduce:
   case 16:
 #line 118 "yacc.y"
     {
-        (yyval.sv_node) = std::make_shared<DeleteStmt>((yyvsp[-1].sv_str), (yyvsp[0].sv_conds));
+        (yyval.sv_node) = std::make_shared<DeleteNode>((yyvsp[-1].sv_str), (yyvsp[0].sv_conds));
     }
 #line 1621 "yacc.tab.c"
     break;
@@ -1623,7 +1623,7 @@ yyreduce:
   case 17:
 #line 122 "yacc.y"
     {
-        (yyval.sv_node) = std::make_shared<UpdateStmt>((yyvsp[-3].sv_str), (yyvsp[-1].sv_set_clauses), (yyvsp[0].sv_conds));
+        (yyval.sv_node) = std::make_shared<UpdateNode>((yyvsp[-3].sv_str), (yyvsp[-1].sv_set_clauses), (yyvsp[0].sv_conds));
     }
 #line 1629 "yacc.tab.c"
     break;
@@ -1631,7 +1631,7 @@ yyreduce:
   case 18:
 #line 126 "yacc.y"
     {
-        (yyval.sv_node) = std::make_shared<SelectStmt>((yyvsp[-3].sv_cols), (yyvsp[-1].sv_strs), (yyvsp[0].sv_conds));
+        (yyval.sv_node) = std::make_shared<SelectNode>((yyvsp[-3].sv_cols), (yyvsp[-1].sv_strs), (yyvsp[0].sv_conds));
     }
 #line 1637 "yacc.tab.c"
     break;

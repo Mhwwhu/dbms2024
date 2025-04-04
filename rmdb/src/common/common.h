@@ -15,8 +15,10 @@ See the Mulan PSL v2 for more details. */
 #include <memory>
 #include <string>
 #include <vector>
+#include <math.h>
 #include "defs.h"
 #include "record/rm_defs.h"
+#include "value.h"
 
 
 struct TabCol {
@@ -28,49 +30,49 @@ struct TabCol {
     }
 };
 
-struct Value {
-    ColType type;  // type of value
-    union {
-        int int_val;      // int value
-        float float_val;  // float value
-    };
-    std::string str_val;  // string value
+// struct Value {
+//     AttrType type;  // type of value
+//     union {
+//         int int_val;      // int value
+//         float float_val;  // float value
+//     };
+//     std::string str_val;  // string value
 
-    std::shared_ptr<RmRecord> raw;  // raw record buffer
+//     std::shared_ptr<RmRecord> raw;  // raw record buffer
 
-    void set_int(int int_val_) {
-        type = TYPE_INT;
-        int_val = int_val_;
-    }
+//     void set_int(int int_val_) {
+//         type = INTS;
+//         int_val = int_val_;
+//     }
 
-    void set_float(float float_val_) {
-        type = TYPE_FLOAT;
-        float_val = float_val_;
-    }
+//     void set_float(float float_val_) {
+//         type = FLOATS;
+//         float_val = float_val_;
+//     }
 
-    void set_str(std::string str_val_) {
-        type = TYPE_STRING;
-        str_val = std::move(str_val_);
-    }
+//     void set_str(std::string str_val_) {
+//         type = AttrType::CHARS;
+//         str_val = std::move(str_val_);
+//     }
 
-    void init_raw(int len) {
-        assert(raw == nullptr);
-        raw = std::make_shared<RmRecord>(len);
-        if (type == TYPE_INT) {
-            assert(len == sizeof(int));
-            *(int *)(raw->data) = int_val;
-        } else if (type == TYPE_FLOAT) {
-            assert(len == sizeof(float));
-            *(float *)(raw->data) = float_val;
-        } else if (type == TYPE_STRING) {
-            if (len < (int)str_val.size()) {
-                throw StringOverflowError();
-            }
-            memset(raw->data, 0, len);
-            memcpy(raw->data, str_val.c_str(), str_val.size());
-        }
-    }
-};
+//     void init_raw(int len) {
+//         assert(raw == nullptr);
+//         raw = std::make_shared<RmRecord>(len);
+//         if (type == INTS) {
+//             assert(len == sizeof(int));
+//             *(int *)(raw->data) = int_val;
+//         } else if (type == FLOATS) {
+//             assert(len == sizeof(float));
+//             *(float *)(raw->data) = float_val;
+//         } else if (type == AttrType::CHARS) {
+//             if (len < (int)str_val.size()) {
+//                 throw StringOverflowError();
+//             }
+//             memset(raw->data, 0, len);
+//             memcpy(raw->data, str_val.c_str(), str_val.size());
+//         }
+//     }
+// };
 
 enum CompOp { OP_EQ, OP_NE, OP_LT, OP_GT, OP_LE, OP_GE };
 
@@ -86,3 +88,16 @@ struct SetClause {
     TabCol lhs;
     Value rhs;
 };
+
+namespace common {
+
+    int compareIgnoreCase(const char* str1, const char* str2);
+
+    int compare_string(void *arg1, int arg1_max_length, void *arg2, int arg2_max_length);
+
+    int compare_int(void *arg1, void *arg2);
+
+    int compare_float(void *arg1, void *arg2);
+
+    std::string double_to_str(double v);
+}

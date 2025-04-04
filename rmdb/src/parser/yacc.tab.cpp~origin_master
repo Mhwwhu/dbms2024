@@ -164,8 +164,8 @@ enum yysymbol_kind_t
   YYSYMBOL_YYACCEPT = 51,                  /* $accept  */
   YYSYMBOL_start = 52,                     /* start  */
   YYSYMBOL_stmt = 53,                      /* stmt  */
-  YYSYMBOL_txnStmt = 54,                   /* txnStmt  */
-  YYSYMBOL_dbStmt = 55,                    /* dbStmt  */
+  YYSYMBOL_txnNode = 54,                   /* txnNode  */
+  YYSYMBOL_dbNode = 55,                    /* dbNode  */
   YYSYMBOL_ddl = 56,                       /* ddl  */
   YYSYMBOL_dml = 57,                       /* dml  */
   YYSYMBOL_fieldList = 58,                 /* fieldList  */
@@ -610,7 +610,7 @@ static const char *const yytname[] =
   "TXN_COMMIT", "TXN_ABORT", "TXN_ROLLBACK", "ORDER_BY", "LEQ", "NEQ",
   "GEQ", "T_EOF", "IDENTIFIER", "VALUE_STRING", "VALUE_INT", "VALUE_FLOAT",
   "';'", "'('", "')'", "','", "'.'", "'='", "'<'", "'>'", "'*'", "$accept",
-  "start", "stmt", "txnStmt", "dbStmt", "ddl", "dml", "fieldList", "field",
+  "start", "stmt", "txnNode", "dbNode", "ddl", "dml", "fieldList", "field",
   "type", "valueList", "value", "condition", "optWhereClause",
   "whereClause", "col", "colList", "op", "expr", "setClauses", "setClause",
   "selector", "tableList", "opt_order_clause", "order_clause",
@@ -1653,7 +1653,7 @@ yyreduce:
 #line 1654 "/home/ubuntu/rdb/src/parser/yacc.tab.cpp"
     break;
 
-  case 10: /* txnStmt: TXN_BEGIN  */
+  case 10: /* txnNode: TXN_BEGIN  */
 #line 87 "/home/ubuntu/rdb/src/parser/yacc.y"
     {
         (yyval.sv_node) = std::make_shared<TxnBegin>();
@@ -1661,7 +1661,7 @@ yyreduce:
 #line 1662 "/home/ubuntu/rdb/src/parser/yacc.tab.cpp"
     break;
 
-  case 11: /* txnStmt: TXN_COMMIT  */
+  case 11: /* txnNode: TXN_COMMIT  */
 #line 91 "/home/ubuntu/rdb/src/parser/yacc.y"
     {
         (yyval.sv_node) = std::make_shared<TxnCommit>();
@@ -1669,7 +1669,7 @@ yyreduce:
 #line 1670 "/home/ubuntu/rdb/src/parser/yacc.tab.cpp"
     break;
 
-  case 12: /* txnStmt: TXN_ABORT  */
+  case 12: /* txnNode: TXN_ABORT  */
 #line 95 "/home/ubuntu/rdb/src/parser/yacc.y"
     {
         (yyval.sv_node) = std::make_shared<TxnAbort>();
@@ -1677,7 +1677,7 @@ yyreduce:
 #line 1678 "/home/ubuntu/rdb/src/parser/yacc.tab.cpp"
     break;
 
-  case 13: /* txnStmt: TXN_ROLLBACK  */
+  case 13: /* txnNode: TXN_ROLLBACK  */
 #line 99 "/home/ubuntu/rdb/src/parser/yacc.y"
     {
         (yyval.sv_node) = std::make_shared<TxnRollback>();
@@ -1685,7 +1685,7 @@ yyreduce:
 #line 1686 "/home/ubuntu/rdb/src/parser/yacc.tab.cpp"
     break;
 
-  case 14: /* dbStmt: SHOW TABLES  */
+  case 14: /* dbNode: SHOW TABLES  */
 #line 106 "/home/ubuntu/rdb/src/parser/yacc.y"
     {
         (yyval.sv_node) = std::make_shared<ShowTables>();
@@ -1736,7 +1736,7 @@ yyreduce:
   case 20: /* dml: INSERT INTO tbName VALUES '(' valueList ')'  */
 #line 136 "/home/ubuntu/rdb/src/parser/yacc.y"
     {
-        (yyval.sv_node) = std::make_shared<InsertStmt>((yyvsp[-4].sv_str), (yyvsp[-1].sv_vals));
+        (yyval.sv_node) = std::make_shared<InsertNode>((yyvsp[-4].sv_str), (yyvsp[-1].sv_vals));
     }
 #line 1742 "/home/ubuntu/rdb/src/parser/yacc.tab.cpp"
     break;
@@ -1744,7 +1744,7 @@ yyreduce:
   case 21: /* dml: DELETE FROM tbName optWhereClause  */
 #line 140 "/home/ubuntu/rdb/src/parser/yacc.y"
     {
-        (yyval.sv_node) = std::make_shared<DeleteStmt>((yyvsp[-1].sv_str), (yyvsp[0].sv_conds));
+        (yyval.sv_node) = std::make_shared<DeleteNode>((yyvsp[-1].sv_str), (yyvsp[0].sv_conds));
     }
 #line 1750 "/home/ubuntu/rdb/src/parser/yacc.tab.cpp"
     break;
@@ -1752,7 +1752,7 @@ yyreduce:
   case 22: /* dml: UPDATE tbName SET setClauses optWhereClause  */
 #line 144 "/home/ubuntu/rdb/src/parser/yacc.y"
     {
-        (yyval.sv_node) = std::make_shared<UpdateStmt>((yyvsp[-3].sv_str), (yyvsp[-1].sv_set_clauses), (yyvsp[0].sv_conds));
+        (yyval.sv_node) = std::make_shared<UpdateNode>((yyvsp[-3].sv_str), (yyvsp[-1].sv_set_clauses), (yyvsp[0].sv_conds));
     }
 #line 1758 "/home/ubuntu/rdb/src/parser/yacc.tab.cpp"
     break;
@@ -1760,7 +1760,7 @@ yyreduce:
   case 23: /* dml: SELECT selector FROM tableList optWhereClause opt_order_clause  */
 #line 148 "/home/ubuntu/rdb/src/parser/yacc.y"
     {
-        (yyval.sv_node) = std::make_shared<SelectStmt>((yyvsp[-4].sv_cols), (yyvsp[-2].sv_strs), (yyvsp[-1].sv_conds), (yyvsp[0].sv_orderby));
+        (yyval.sv_node) = std::make_shared<SelectNode>((yyvsp[-4].sv_cols), (yyvsp[-2].sv_strs), (yyvsp[-1].sv_conds), (yyvsp[0].sv_orderby));
     }
 #line 1766 "/home/ubuntu/rdb/src/parser/yacc.tab.cpp"
     break;

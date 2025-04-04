@@ -41,15 +41,6 @@ private:
         }
     }
 
-    static std::string type2str(SvType type) {
-        static std::map<SvType, std::string> m{
-                {SV_TYPE_INT,    "INT"},
-                {SV_TYPE_FLOAT,  "FLOAT"},
-                {SV_TYPE_STRING, "STRING"},
-        };
-        return m.at(type);
-    }
-
     static std::string op2str(SvCompOp op) {
         static std::map<SvCompOp, std::string> m{
                 {SV_OP_EQ, "=="},
@@ -101,7 +92,7 @@ private:
             // print_val(x->col_name, offset);
             for(auto col_name: x->col_names)
                 print_val(col_name, offset);
-        } else if (auto x = std::dynamic_pointer_cast<ColDef>(node)) {
+        } else if (auto x = std::dynamic_pointer_cast<Field>(node)) {
             std::cout << "COL_DEF\n";
             print_val(x->col_name, offset);
             print_node(x->type_len, offset);
@@ -111,7 +102,7 @@ private:
             print_val(x->col_name, offset);
         } else if (auto x = std::dynamic_pointer_cast<TypeLen>(node)) {
             std::cout << "TYPE_LEN\n";
-            print_val(type2str(x->type), offset);
+            print_val(std::string(attr_type_to_string(x->type)), offset);
             print_val(x->len, offset);
         } else if (auto x = std::dynamic_pointer_cast<IntLit>(node)) {
             std::cout << "INT_LIT\n";
@@ -131,20 +122,20 @@ private:
             print_node(x->lhs, offset);
             print_val(op2str(x->op), offset);
             print_node(x->rhs, offset);
-        } else if (auto x = std::dynamic_pointer_cast<InsertStmt>(node)) {
+        } else if (auto x = std::dynamic_pointer_cast<InsertNode>(node)) {
             std::cout << "INSERT\n";
             print_val(x->tab_name, offset);
             print_node_list(x->vals, offset);
-        } else if (auto x = std::dynamic_pointer_cast<DeleteStmt>(node)) {
+        } else if (auto x = std::dynamic_pointer_cast<DeleteNode>(node)) {
             std::cout << "DELETE\n";
             print_val(x->tab_name, offset);
             print_node_list(x->conds, offset);
-        } else if (auto x = std::dynamic_pointer_cast<UpdateStmt>(node)) {
+        } else if (auto x = std::dynamic_pointer_cast<UpdateNode>(node)) {
             std::cout << "UPDATE\n";
             print_val(x->tab_name, offset);
             print_node_list(x->set_clauses, offset);
             print_node_list(x->conds, offset);
-        } else if (auto x = std::dynamic_pointer_cast<SelectStmt>(node)) {
+        } else if (auto x = std::dynamic_pointer_cast<SelectNode>(node)) {
             std::cout << "SELECT\n";
             print_node_list(x->cols, offset);
             print_val_list(x->tabs, offset);

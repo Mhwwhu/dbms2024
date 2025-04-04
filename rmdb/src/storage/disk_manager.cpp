@@ -34,7 +34,7 @@ void DiskManager::write_page(int fd, page_id_t page_no, const char *offset, int 
     // 2.调用write()函数
     // 注意write返回值与num_bytes不等时 throw InternalError("DiskManager::write_page Error");
     lseek(fd, page_no * PAGE_SIZE, SEEK_SET);
-    ssize_t size = (fd, offset, num_bytes);
+    ssize_t size = write(fd, offset, num_bytes);
     if(size != num_bytes) {
         throw InternalError("DiskManager::write_page Error");
     }
@@ -115,7 +115,7 @@ void DiskManager::create_file(const std::string &path) {
     if(is_file(path)) {
         throw new FileExistsError(path);
     }
-    open(path.c_str(), O_CREAT);
+    open(path.c_str(), O_CREAT | O_RDWR, 0666);
 }
 
 /**

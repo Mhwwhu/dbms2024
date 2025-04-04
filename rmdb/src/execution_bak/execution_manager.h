@@ -21,10 +21,10 @@ See the Mulan PSL v2 for more details. */
 #include "system/sm.h"
 #include "common/context.h"
 #include "common/common.h"
-#include "optimizer/plan.h"
+#include "plan/plan.h"
 #include "executor_abstract.h"
 #include "transaction/transaction_manager.h"
-#include "optimizer/planner.h"
+#include "plan/planner.h"
 
 class Planner;
 /**

@@ -1,2 +1,5 @@
-set(SOURCES planner.cpp)
-add_library(planner STATIC ${SOURCES})
+set(SOURCES optimizer.cpp)
+
+add_library(optimizer STATIC ${SOURCES})
+
+target_link_libraries(optimizer operator)
