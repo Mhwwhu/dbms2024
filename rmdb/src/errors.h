@@ -59,6 +59,11 @@ class FileNotFoundError : public RMDBError {
     FileNotFoundError(const std::string &filename) : RMDBError("File not found: " + filename) {}
 };
 
+class FileOpeningFailedError : public RMDBError {
+    public:
+    FileOpeningFailedError(const std::string& filename, error_t error_no) : RMDBError("Failed opening file " + filename + ": " + strerror(error_no)) {} 
+};
+
 // RM errors
 class RecordNotFoundError : public RMDBError {
    public:
