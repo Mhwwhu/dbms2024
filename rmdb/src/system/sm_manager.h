@@ -14,6 +14,7 @@ See the Mulan PSL v2 for more details. */
 #include "record/rm_file_handle.h"
 #include "sm_defs.h"
 #include "sm_meta.h"
+#include "common/rc.h"
 
 class Context;
 
@@ -51,13 +52,11 @@ class SmManager {
 
     IxManager* get_ix_manager() { return ix_manager_; }  
 
-    bool is_dir(const std::string& db_name);
-
     void create_db(const std::string& db_name);
 
     void drop_db(const std::string& db_name);
 
-    void open_db(const std::string& db_name);
+    RC open_db(const std::string& db_name);
 
     void close_db();
 

@@ -293,7 +293,7 @@ int main(int argc, char **argv) {
                      "\n";
         // Database name is passed by args
         std::string db_name = argv[1];
-        if (!sm_manager->is_dir(db_name)) {
+        if (!disk_manager->is_dir(db_name)) {
             // Database not found, create a new one
             sm_manager->create_db(db_name);
         }

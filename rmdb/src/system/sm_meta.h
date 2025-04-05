@@ -18,50 +18,136 @@ See the Mulan PSL v2 for more details. */
 
 #include "errors.h"
 #include "sm_defs.h"
+#include "common/rc.h"
+#include "deps/jsoncpp/json/json.h"
+
+static const Json::StaticString FIELD_COL_NAME("name");
+static const Json::StaticString FIELD_COL_TYPE("type");
+static const Json::StaticString FIELD_COL_LEN("length");
+static const Json::StaticString FIELD_COL_OFFSET("offset");
+static const Json::StaticString FIELD_COL_ID("id");
+static const Json::StaticString FIELD_COL_NULLABLE("nullable");
+
+static const Json::StaticString FIELD_TAB_NAME("name");
+static const Json::StaticString FIELD_TAB_ID("id");
+static const Json::StaticString FIELD_TAB_COLUMNS("columns");
+static const Json::StaticString FIELD_TAB_INDEXES("indexes");
+
+static const Json::StaticString FIELD_INDEX_NAME("name");
+static const Json::StaticString FIELD_INDEX_COLS("columns");
+static const Json::StaticString FIELD_INDEX_UNIQUE("unique");
+
+static const Json::StaticString FIELD_DB_NAME("name");
+static const Json::StaticString FIELD_DB_TABLES("tables");
 
 /* 字段元数据 */
 struct ColMeta {
-    std::string tab_name;   // 字段所属表名称
     std::string name;       // 字段名称
     AttrType type;           // 字段类型
     int len;                // 字段长度
     int offset;             // 字段位于记录中的偏移量
-    bool index;             /** unused */
+    int id;
+    bool nullable;             /** unused */
 
-    friend std::ostream &operator<<(std::ostream &os, const ColMeta &col) {
-        // ColMeta中有各个基本类型的变量，然后调用重载的这些变量的操作符<<（具体实现逻辑在defs.h）
-        return os << col.tab_name << ' ' << col.name << ' ' << col.type << ' ' << col.len << ' ' << col.offset << ' '
-                  << col.index;
+    Json::Value to_json() 
+    {
+        Json::Value col_value;
+        col_value[FIELD_COL_NAME] = name;
+        col_value[FIELD_COL_TYPE] = attr_type_to_string(type);
+        col_value[FIELD_COL_LEN] = len;
+        col_value[FIELD_COL_OFFSET] = offset;
+        col_value[FIELD_COL_ID] = id;
+        col_value[FIELD_COL_NULLABLE] = nullable;
+        return col_value;
     }
 
-    friend std::istream &operator>>(std::istream &is, ColMeta &col) {
-        return is >> col.tab_name >> col.name >> col.type >> col.len >> col.offset >> col.index;
+    RC from_json(const Json::Value& json_value)
+    {
+        RC rc = RC::SUCCESS;
+
+        if(!json_value.isObject()) return RC::INTERNAL;
+
+        const Json::Value& name_value = json_value[FIELD_COL_NAME.c_str()];
+        const Json::Value& type_value = json_value[FIELD_COL_TYPE.c_str()];
+        const Json::Value& offset_value = json_value[FIELD_COL_OFFSET.c_str()];
+        const Json::Value& len_value = json_value[FIELD_COL_LEN.c_str()];
+        const Json::Value& col_id_value = json_value[FIELD_COL_ID.c_str()];
+        const Json::Value& nullable_value = json_value[FIELD_COL_NULLABLE.c_str()];
+    
+        if (!name_value.isString()) {
+            return RC::JSON_PARSE_FAILED;
+        }
+        if (!type_value.isString()) {
+            return RC::JSON_PARSE_FAILED;
+        }
+        if (!offset_value.isInt()) {
+            return RC::JSON_PARSE_FAILED;
+        }
+        if (!len_value.isInt()) {
+            return RC::JSON_PARSE_FAILED;
+        }
+        if (!col_id_value.isInt()) {
+            return RC::JSON_PARSE_FAILED;
+        }
+        if (!nullable_value.isBool()) {
+            return RC::JSON_PARSE_FAILED;
+        }
+        AttrType type = attr_type_from_string(type_value.asCString());
+        if (AttrType::UNDEFINED == type) {
+            return RC::INTERNAL;
+        }
+    
+        name = name_value.asCString();
+        offset = offset_value.asInt();
+        len = len_value.asInt();
+        id = col_id_value.asInt();
+        nullable = nullable_value.asBool();
+
+        return RC::SUCCESS;
     }
 };
 
 /* 索引元数据 */
 struct IndexMeta {
-    std::string tab_name;           // 索引所属表名称
-    int col_tot_len;                // 索引字段长度总和
-    int col_num;                    // 索引字段数量
+    std::string name;           // 索引名称
     std::vector<ColMeta> cols;      // 索引包含的字段
+    bool unique;
 
-    friend std::ostream &operator<<(std::ostream &os, const IndexMeta &index) {
-        os << index.tab_name << " " << index.col_tot_len << " " << index.col_num;
-        for(auto& col: index.cols) {
-            os << "\n" << col;
+    Json::Value to_json()
+    {
+        Json::Value idx_value;
+        idx_value[FIELD_INDEX_NAME] = name;
+        idx_value[FIELD_INDEX_UNIQUE] = unique;
+
+        Json::Value cols_value;
+        for(ColMeta& col : cols) {
+            cols_value.append(std::move(col.to_json()));
         }
-        return os;
+        idx_value[FIELD_INDEX_COLS] = cols_value;
+
+        return idx_value;
     }
 
-    friend std::istream &operator>>(std::istream &is, IndexMeta &index) {
-        is >> index.tab_name >> index.col_tot_len >> index.col_num;
-        for(int i = 0; i < index.col_num; ++i) {
+    RC from_json(const Json::Value& json_value)
+    {
+        Json::Value name_value = json_value[FIELD_INDEX_NAME.c_str()];
+        Json::Value unique_value = json_value[FIELD_INDEX_UNIQUE.c_str()];
+        Json::Value cols_value = json_value[FIELD_INDEX_COLS.c_str()];
+
+        if(!name_value.isString()) return RC::JSON_PARSE_FAILED;
+        if(!unique_value.isBool()) return RC::JSON_PARSE_FAILED;
+        if(!cols_value.isArray()) return RC::JSON_PARSE_FAILED;
+
+        name = name_value.asCString();
+        unique = unique_value.asBool();
+
+        for(auto col_value : cols_value) {
             ColMeta col;
-            is >> col;
-            index.cols.push_back(col);
+            if(RM_FAIL(col.from_json(col_value))) return RC::JSON_PARSE_FAILED;
+            cols.push_back(col);
         }
-        return is;
+
+        return RC::SUCCESS;
     }
 };
 
@@ -85,35 +171,35 @@ struct TabMeta {
     }
 
     /* 判断当前表上是否建有指定索引，索引包含的字段为col_names */
-    bool is_index(const std::vector<std::string>& col_names) const {
-        for(auto& index: indexes) {
-            if(index.col_num == col_names.size()) {
-                size_t i = 0;
-                for(; i < index.col_num; ++i) {
-                    if(index.cols[i].name.compare(col_names[i]) != 0)
-                        break;
-                }
-                if(i == index.col_num) return true;
-            }
-        }
+    // bool is_index(const std::vector<std::string>& col_names) const {
+    //     for(auto& index: indexes) {
+    //         if(index.col_num == col_names.size()) {
+    //             size_t i = 0;
+    //             for(; i < index.col_num; ++i) {
+    //                 if(index.cols[i].name.compare(col_names[i]) != 0)
+    //                     break;
+    //             }
+    //             if(i == index.col_num) return true;
+    //         }
+    //     }
 
-        return false;
-    }
+    //     return false;
+    // }
 
     /* 根据字段名称集合获取索引元数据 */
-    std::vector<IndexMeta>::iterator get_index_meta(const std::vector<std::string>& col_names) {
-        for(auto index = indexes.begin(); index != indexes.end(); ++index) {
-            if((*index).col_num != col_names.size()) continue;
-            auto& index_cols = (*index).cols;
-            size_t i = 0;
-            for(; i < col_names.size(); ++i) {
-                if(index_cols[i].name.compare(col_names[i]) != 0) 
-                    break;
-            }
-            if(i == col_names.size()) return index;
-        }
-        throw IndexNotFoundError(name, col_names);
-    }
+    // std::vector<IndexMeta>::iterator get_index_meta(const std::vector<std::string>& col_names) {
+    //     for(auto index = indexes.begin(); index != indexes.end(); ++index) {
+    //         if((*index).col_num != col_names.size()) continue;
+    //         auto& index_cols = (*index).cols;
+    //         size_t i = 0;
+    //         for(; i < col_names.size(); ++i) {
+    //             if(index_cols[i].name.compare(col_names[i]) != 0) 
+    //                 break;
+    //         }
+    //         if(i == col_names.size()) return index;
+    //     }
+    //     throw IndexNotFoundError(name, col_names);
+    // }
 
     /* 根据字段名称获取字段元数据 */
     std::vector<ColMeta>::iterator get_col(const std::string &col_name) {
@@ -124,33 +210,55 @@ struct TabMeta {
         return pos;
     }
 
-    friend std::ostream &operator<<(std::ostream &os, const TabMeta &tab) {
-        os << tab.name << '\n' << tab.cols.size() << '\n';
-        for (auto &col : tab.cols) {
-            os << col << '\n';  // col是ColMeta类型，然后调用重载的ColMeta的操作符<<
+    Json::Value to_json() {
+        Json::Value table_value;
+
+        table_value[FIELD_TAB_NAME] = name;
+
+        Json::Value cols_value;
+        for(ColMeta& col : cols) {
+            cols_value.append(std::move(col.to_json()));
         }
-        os << tab.indexes.size() << "\n";
-        for (auto &index : tab.indexes) {
-            os << index << "\n";
+        table_value[FIELD_TAB_COLUMNS] = std::move(cols_value);
+
+        Json::Value indexes_value;
+        for(IndexMeta& idx : indexes) {
+            indexes_value.append(std::move(idx.to_json()));
         }
-        return os;
+        table_value[FIELD_TAB_INDEXES] = std::move(indexes_value);
+
+        return table_value;
     }
 
-    friend std::istream &operator>>(std::istream &is, TabMeta &tab) {
-        size_t n;
-        is >> tab.name >> n;
-        for (size_t i = 0; i < n; i++) {
+    RC from_json(const Json::Value json_value)
+    {
+        Json::Value name_value = json_value[FIELD_TAB_NAME.c_str()];
+        Json::Value cols_value = json_value[FIELD_TAB_COLUMNS.c_str()];
+        Json::Value idxs_value = json_value[FIELD_TAB_INDEXES.c_str()];
+
+        if(!name_value.isString()) return RC::JSON_PARSE_FAILED;
+        if(!cols_value.isArray()) return RC::JSON_PARSE_FAILED;
+        if(!idxs_value.isArray() && !idxs_value.isNull()) return RC::JSON_PARSE_FAILED;
+
+        for(auto col_value : cols_value) {
             ColMeta col;
-            is >> col;
-            tab.cols.push_back(col);
+            if(RM_FAIL(col.from_json(col_value))) return RC::JSON_PARSE_FAILED;
+            cols.push_back(col);
         }
-        is >> n;
-        for(size_t i = 0; i < n; ++i) {
-            IndexMeta index;
-            is >> index;
-            tab.indexes.push_back(index);
+        // 要对cols的id进行排序
+        std::sort(cols.begin(), cols.end(), [](ColMeta& left, ColMeta& right) { return left.id < right.id; });
+
+        if(!idxs_value.isNull()) {
+            for(auto idx_value : idxs_value) {
+                IndexMeta idx;
+                if(RM_FAIL(idx.from_json(idx_value))) return RC::JSON_PARSE_FAILED;
+                indexes.push_back(idx);
+            }
         }
-        return is;
+
+        name = name_value.asCString();
+
+        return RC::SUCCESS;
     }
 };
 
@@ -183,23 +291,65 @@ class DbMeta {
         return pos->second;
     }
 
-    // 重载操作符 <<
-    friend std::ostream &operator<<(std::ostream &os, const DbMeta &db_meta) {
-        os << db_meta.name_ << '\n' << db_meta.tabs_.size() << '\n';
-        for (auto &entry : db_meta.tabs_) {
-            os << entry.second << '\n';
+    Json::Value to_json()
+    {
+        Json::Value db_value;
+
+        db_value[FIELD_DB_NAME] = name_;
+        
+        Json::Value tabs_value;
+        for(auto pair : tabs_) {
+            tabs_value.append(std::move(pair.second.to_json()));
         }
-        return os;
+        db_value[FIELD_DB_TABLES] = tabs_value;
+
+        return db_value;
     }
 
-    friend std::istream &operator>>(std::istream &is, DbMeta &db_meta) {
-        size_t n;
-        is >> db_meta.name_ >> n;
-        for (size_t i = 0; i < n; i++) {
-            TabMeta tab;
-            is >> tab;
-            db_meta.tabs_[tab.name] = tab;
+    RC from_json(const Json::Value& json_value)
+    {
+        Json::Value name_value = json_value[FIELD_DB_NAME.c_str()];
+        Json::Value tabs_value = json_value[FIELD_DB_TABLES.c_str()];
+
+        if(!name_value.isString()) return RC::JSON_PARSE_FAILED;
+        if(!tabs_value.isArray() && !tabs_value.isNull()) return RC::JSON_PARSE_FAILED;
+        
+        if(!tabs_value.isNull()) {
+            for(auto tab_value : tabs_value) {
+                TabMeta tab;
+                if(RM_FAIL(tab.from_json(tab_value))) return RC::JSON_PARSE_FAILED;
+                tabs_[tab.name] = tab;
+            }
         }
-        return is;
+
+        name_ = name_value.asCString();
+
+        return RC::SUCCESS;
+    }
+
+    RC serialize(std::ostream& os)
+    {
+        Json::StreamWriterBuilder builder;
+        Json::StreamWriter* writer = builder.newStreamWriter();
+
+        std::streampos old_pos = os.tellp();
+        writer->write(to_json(), &os);
+
+        delete writer;
+        return RC::SUCCESS;
+    }
+
+    RC deserialize(std::istream& is)
+    {
+        Json::Value             db_value;
+        Json::CharReaderBuilder builder;
+        std::string             errors;
+
+        std::streampos old_pos = is.tellg();
+        if (!Json::parseFromStream(builder, is, &db_value, &errors)) {
+            return RC::JSON_PARSE_FAILED;
+	    }
+
+        return from_json(db_value);
     }
 };

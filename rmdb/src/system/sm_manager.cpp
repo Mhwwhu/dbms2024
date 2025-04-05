@@ -19,23 +19,16 @@ See the Mulan PSL v2 for more details. */
 #include "record/rm.h"
 #include "record_printer.h"
 #include "common/type/attr_type.h"
+#include "common/rc.h"
 
-/**
- * @description: 判断是否为一个文件夹
- * @return {bool} 返回是否为一个文件夹
- * @param {string&} db_name 数据库文件名称，与文件夹同名
- */
-bool SmManager::is_dir(const std::string& db_name) {
-    struct stat st;
-    return stat(db_name.c_str(), &st) == 0 && S_ISDIR(st.st_mode);
-}
+using namespace std;
 
 /**
  * @description: 创建数据库，所有的数据库相关文件都放在数据库同名文件夹下
  * @param {string&} db_name 数据库名称
  */
 void SmManager::create_db(const std::string& db_name) {
-    if (is_dir(db_name)) {
+    if (disk_manager_->is_dir(db_name)) {
         throw DatabaseExistsError(db_name);
     }
     //为数据库创建一个子目录
@@ -53,8 +46,8 @@ void SmManager::create_db(const std::string& db_name) {
     // 注意，此处ofstream会在当前目录创建(如果没有此文件先创建)和打开一个名为DB_META_NAME的文件
     std::ofstream ofs(DB_META_NAME);
 
-    // 将new_db中的信息，按照定义好的operator<<操作符，写入到ofs打开的DB_META_NAME文件中
-    ofs << *new_db;  // 注意：此处重载了操作符<<
+    // 将new_db中的信息写入到ofs打开的DB_META_NAME文件中
+    new_db->serialize(ofs);
 
     delete new_db;
 
@@ -72,7 +65,7 @@ void SmManager::create_db(const std::string& db_name) {
  * @param {string&} db_name 数据库名称，与文件夹同名
  */
 void SmManager::drop_db(const std::string& db_name) {
-    if (!is_dir(db_name)) {
+    if (!disk_manager_->is_dir(db_name)) {
         throw DatabaseNotFoundError(db_name);
     }
     std::string cmd = "rm -r " + db_name;
@@ -85,8 +78,9 @@ void SmManager::drop_db(const std::string& db_name) {
  * @description: 打开数据库，找到数据库对应的文件夹，并加载数据库元数据和相关文件
  * @param {string&} db_name 数据库名称，与文件夹同名
  */
-void SmManager::open_db(const std::string& db_name) {
-    
+RC SmManager::open_db(const std::string& db_name) {
+    std::ifstream is(db_name + '/' + DB_META_NAME);
+    return db_.deserialize(is);
 }
 
 /**
@@ -94,8 +88,8 @@ void SmManager::open_db(const std::string& db_name) {
  */
 void SmManager::flush_meta() {
     // 默认清空文件
-    std::ofstream ofs(DB_META_NAME);
-    ofs << db_;
+    std::ofstream ofs(db_.name_ + '/' + DB_META_NAME);
+    db_.serialize(ofs);
 }
 
 /**
@@ -132,21 +126,21 @@ void SmManager::show_tables(Context* context) {
  * @param {Context*} context 
  */
 void SmManager::desc_table(const std::string& tab_name, Context* context) {
-    TabMeta &tab = db_.get_table(tab_name);
+    // TabMeta &tab = db_.get_table(tab_name);
 
-    std::vector<std::string> captions = {"Field", "Type", "Index"};
-    RecordPrinter printer(captions.size());
-    // Print header
-    printer.print_separator(context);
-    printer.print_record(captions, context);
-    printer.print_separator(context);
-    // Print fields
-    for (auto &col : tab.cols) {
-        std::vector<std::string> field_info = {col.name, attr_type_to_string(col.type), col.index ? "YES" : "NO"};
-        printer.print_record(field_info, context);
-    }
-    // Print footer
-    printer.print_separator(context);
+    // std::vector<std::string> captions = {"Field", "Type", "Index"};
+    // RecordPrinter printer(captions.size());
+    // // Print header
+    // printer.print_separator(context);
+    // printer.print_record(captions, context);
+    // printer.print_separator(context);
+    // // Print fields
+    // for (auto &col : tab.cols) {
+    //     std::vector<std::string> field_info = {col.name, attr_type_to_string(col.type), col.index ? "YES" : "NO"};
+    //     printer.print_record(field_info, context);
+    // }
+    // // Print footer
+    // printer.print_separator(context);
 }
 
 /**
@@ -163,22 +157,26 @@ void SmManager::create_table(const std::string& tab_name, const std::vector<ColD
     int curr_offset = 0;
     TabMeta tab;
     tab.name = tab_name;
+    int id = 0;
     for (auto &col_def : col_defs) {
-        ColMeta col = {.tab_name = tab_name,
-                       .name = col_def.name,
+        ColMeta col = {.name = col_def.name,
                        .type = col_def.type,
                        .len = col_def.len,
                        .offset = curr_offset,
-                       .index = false};
+                       .id = id,
+                       .nullable = false,
+                       };
         curr_offset += col_def.len;
+        id++;
         tab.cols.push_back(col);
     }
     // Create & open record file
     int record_size = curr_offset;  // record_size就是col meta所占的大小（表的元数据也是以记录的形式进行存储的）
-    rm_manager_->create_file(tab_name, record_size);
+    string tab_path = db_.name_ + '/' + tab_name;
+    rm_manager_->create_file(tab_path, record_size);
     db_.tabs_[tab_name] = tab;
     // fhs_[tab_name] = rm_manager_->open_file(tab_name);
-    fhs_.emplace(tab_name, rm_manager_->open_file(tab_name));
+    fhs_.emplace(tab_name, rm_manager_->open_file(tab_path));
 
     flush_meta();
 }

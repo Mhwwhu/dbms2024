@@ -12,13 +12,7 @@ See the Mulan PSL v2 for more details. */
 
 #include <memory>
 
-#include "execution_bak/executor_delete.h"
-#include "execution_bak/executor_index_scan.h"
-#include "execution_bak/executor_insert.h"
-#include "execution_bak/executor_nestedloop_join.h"
-#include "execution_bak/executor_projection.h"
-#include "execution_bak/executor_seq_scan.h"
-#include "execution_bak/executor_update.h"
+
 #include "index/ix.h"
 #include "record_printer.h"
 
