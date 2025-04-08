@@ -2,6 +2,8 @@
 
 #include "stmt.h"
 #include "expression/expression.h"
+#include "system/sm_manager.h"
+#include "parser/ast.h"
 
 class CreateTableStmt : public IStmt {
 public:
@@ -11,7 +13,7 @@ public:
 
     StmtType type() const override { return StmtType::CREATE_TABLE_STMT; }
 
-    static RC create(SmManager* manager, std::shared_ptr<ast::CreateTable> create_table_node, std::shared_ptr<IStmt>& stmt);
+    static RC create(SmManager* sm_manager, std::shared_ptr<ast::CreateTable> create_table_node, std::shared_ptr<IStmt>& stmt);
 
     const std::string table_name() const { return table_name_; }
 

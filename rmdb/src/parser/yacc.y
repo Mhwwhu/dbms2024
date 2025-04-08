@@ -50,7 +50,6 @@ WHERE UPDATE SET SELECT INT CHAR FLOAT INDEX AND JOIN EXIT HELP TXN_BEGIN TXN_CO
 %type <sv_cond> condition
 %type <sv_conds> whereClause optWhereClause
 %type <sv_orderby>  order_clause opt_order_clause
-%type <sv_orderby_dir> opt_asc_desc
 %type <sv_setKnobType> set_knob_type
 
 %%
@@ -80,9 +79,9 @@ start:
 stmt:
         dbStmt
     |   ddl
-    |   dml
+    /* |   dml */
     |   txnStmt
-    |   setStmt
+    /* |   setStmt */
     ;
 
 txnStmt:
@@ -111,12 +110,12 @@ dbStmt:
     }
     ;
 
-setStmt:
+/* setStmt:
         SET set_knob_type '=' VALUE_BOOL
     {
         $$ = std::make_shared<SetNode>($2, $4);
     }
-    ;
+    ; */
 
 ddl:
         CREATE TABLE tbName '(' fieldList ')'
@@ -131,17 +130,17 @@ ddl:
     {
         $$ = std::make_shared<DescTable>($2);
     }
-    |   CREATE INDEX tbName '(' colNameList ')'
+    /* |   CREATE INDEX tbName '(' colNameList ')'
     {
         $$ = std::make_shared<CreateIndex>($3, $5);
     }
     |   DROP INDEX tbName '(' colNameList ')'
     {
         $$ = std::make_shared<DropIndex>($3, $5);
-    }
+    } */
     ;
 
-dml:
+/* dml:
         INSERT INTO tbName VALUES '(' valueList ')'
     {
         $$ = std::make_shared<InsertNode>($3, $6);
@@ -158,7 +157,7 @@ dml:
     {
         $$ = std::make_shared<SelectNode>($2, $4, $5, $6);
     }
-    ;
+    ; */
 
 fieldList:
         field
@@ -171,7 +170,7 @@ fieldList:
     }
     ;
 
-colNameList:
+/* colNameList:
         colName
     {
         $$ = std::vector<std::string>{$1};
@@ -180,7 +179,7 @@ colNameList:
     {
         $$.push_back($3);
     }
-    ;
+    ; */
 
 field:
         colName type
@@ -234,22 +233,22 @@ value:
     }
     ;
 
-condition:
+/* condition:
         col op expr
     {
         $$ = std::make_shared<BinaryExpr>($1, $2, $3);
     }
-    ;
+    ; */
 
-optWhereClause:
-        /* epsilon */ { /* ignore*/ }
+/* optWhereClause:
+         {  }
     |   WHERE whereClause
     {
         $$ = $2;
     }
-    ;
+    ; */
 
-whereClause:
+/* whereClause:
         condition 
     {
         $$ = std::vector<std::shared_ptr<BinaryExpr>>{$1};
@@ -258,7 +257,7 @@ whereClause:
     {
         $$.push_back($3);
     }
-    ;
+    ; */
 
 col:
         tbName '.' colName
@@ -283,30 +282,12 @@ colList:
     ;
 
 op:
-        '='
-    {
-        $$ = SV_OP_EQ;
-    }
-    |   '<'
-    {
-        $$ = SV_OP_LT;
-    }
-    |   '>'
-    {
-        $$ = SV_OP_GT;
-    }
-    |   NEQ
-    {
-        $$ = SV_OP_NE;
-    }
-    |   LEQ
-    {
-        $$ = SV_OP_LE;
-    }
-    |   GEQ
-    {
-        $$ = SV_OP_GE;
-    }
+    '=' { $$ = EQ; }
+    | '<' { $$ = LT; }
+    | '>' { $$ = GT; }
+    | NEQ { $$ = NE; }
+    | LEQ { $$ = LE; }
+    | GEQ { $$ = GE; }
     ;
 
 expr:
@@ -338,15 +319,15 @@ setClause:
     }
     ;
 
-selector:
+/* selector:
         '*'
     {
         $$ = {};
     }
     |   colList
-    ;
+    ; */
 
-tableList:
+/* tableList:
         tbName
     {
         $$ = std::vector<std::string>{$1};
@@ -359,14 +340,14 @@ tableList:
     {
         $$.push_back($3);
     }
-    ;
+    ; */
 
-opt_order_clause:
+/* opt_order_clause:
     ORDER BY order_clause      
     { 
         $$ = $3; 
     }
-    |   /* epsilon */ { /* ignore*/ }
+    |   { }
     ;
 
 order_clause:
@@ -380,7 +361,7 @@ opt_asc_desc:
     ASC          { $$ = OrderBy_ASC;     }
     |  DESC      { $$ = OrderBy_DESC;    }
     |       { $$ = OrderBy_DEFAULT; }
-    ;    
+    ;     */
 
 set_knob_type:
     ENABLE_NESTLOOP { $$ = EnableNestLoop; }

@@ -39,7 +39,7 @@ int main() {
         YY_BUFFER_STATE buf = yy_scan_string(sql.c_str());
         assert(yyparse() == 0);
         if (ast::parse_tree != nullptr) {
-            ast::TreePrinter::print(ast::parse_tree);
+            // ast::TreePrinter::print(ast::parse_tree);
             yy_delete_buffer(buf);
             std::cout << std::endl;
         } else {

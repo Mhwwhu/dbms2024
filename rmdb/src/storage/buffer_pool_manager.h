@@ -22,6 +22,7 @@ See the Mulan PSL v2 for more details. */
 #include "page.h"
 #include "replacer/lru_replacer.h"
 #include "replacer/replacer.h"
+#include "common/rc.h"
 
 class BufferPoolManager {
    private:
@@ -64,22 +65,22 @@ class BufferPoolManager {
     static void mark_dirty(Page* page) { page->is_dirty_ = true; }
 
    public: 
-    Page* fetch_page(PageId page_id);
+    RC fetch_page(PageId page_id, Page* page);
 
-    bool unpin_page(PageId page_id, bool is_dirty);
+    RC unpin_page(PageId page_id, bool is_dirty);
 
-    bool flush_page(PageId page_id);
+    RC flush_page(PageId page_id);
 
-    Page* new_page(PageId* page_id);
+    RC new_page(PageId* page_id, Page* page);
 
-    bool delete_page(PageId page_id);
+    RC delete_page(PageId page_id);
 
-    void flush_all_pages(int fd);
+    RC flush_all_pages(int fd);
 
    private:
     bool find_victim_page(frame_id_t* frame_id);
 
-    void update_page(Page* page, PageId new_page_id, frame_id_t new_frame_id);
+    RC update_page(Page* page, PageId new_page_id, frame_id_t new_frame_id);
 
-    void flush_page_unsafe(Page* page);
+    RC flush_page_unsafe(Page* page);
 };

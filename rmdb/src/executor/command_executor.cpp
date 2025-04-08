@@ -1,6 +1,7 @@
 #include "command_executor.h"
 #include "common/context.h"
 #include "create_table_executor.h"
+#include "drop_table_executor.h"
 
 RC CommandExecutor::execute(Context* context)
 {
@@ -8,10 +9,16 @@ RC CommandExecutor::execute(Context* context)
     RC rc = RC::SUCCESS;
 
     switch(stmt->type()) {
-    case StmtType::CREATE_TABLE_STMT:
+    case StmtType::CREATE_TABLE_STMT: {
         CreateTableExecutor executor;
         rc = executor.execute(context);
         break;
+    }
+    case StmtType::DROP_TABLE_STMT: {
+        DropTableExecutor executor;
+        rc = executor.execute(context);
+        break;
+    }
     }
 
     return rc;

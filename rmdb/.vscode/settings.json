@@ -69,6 +69,10 @@
         "charconv": "cpp",
         "codecvt": "cpp",
         "shared_mutex": "cpp",
-        "span": "cpp"
+        "span": "cpp",
+        "executor": "cpp",
+        "netfwd": "cpp",
+        "future": "cpp",
+        "cerrno": "cpp"
     }
 }

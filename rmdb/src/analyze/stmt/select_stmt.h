@@ -4,6 +4,7 @@
 #include "analyze/clause/filter_clause.h"
 #include "analyze/clause/orderby_clause.h"
 #include "expression/expression.h"
+#include "parser/ast.h"
 
 class SelectStmt : public IStmt {
 public:
@@ -12,7 +13,7 @@ public:
 
     StmtType type() const override { return StmtType::SELECT_STMT; }
 
-    RC create(SmManager* manager, std::shared_ptr<ast::TreeNode> select_node, std::shared_ptr<IStmt>& select_query);
+    // RC create(SmManager* manager, std::shared_ptr<ast::SelectNode> select_node, std::shared_ptr<IStmt>& select_query);
 
     std::shared_ptr<FilterClause> where_clause() const { return where_clause_; }
     std::shared_ptr<FilterClause> having_clause() const { return having_clause_; }

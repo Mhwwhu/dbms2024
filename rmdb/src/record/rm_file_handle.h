@@ -16,6 +16,8 @@ See the Mulan PSL v2 for more details. */
 
 #include "bitmap.h"
 #include "rm_defs.h"
+#include "common/rc.h"
+#include "tuple/tuple.h"
 
 class RmManager;
 class Context;
@@ -67,26 +69,28 @@ class RmFileHandle {
 
     /* 判断指定位置上是否已经存在一条记录，通过Bitmap来判断 */
     bool is_record(const Rid &rid) const {
-        RmPageHandle page_handle = fetch_page_handle(rid.page_no);
+        RmPageHandle page_handle(&file_hdr_, nullptr);
+        RC rc = fetch_page_handle(rid.page_no, page_handle);
+        if(RM_FAIL(rc)) return false;
         return Bitmap::is_set(page_handle.bitmap, rid.slot_no);  // page的slot_no位置上是否有record
     }
 
-    std::unique_ptr<RmRecord> get_record(const Rid &rid, Context *context) const;
+    RC get_record(const Rid &rid, Context *context, std::shared_ptr<RmRecord>& record) const;
 
-    Rid insert_record(char *buf, Context *context);
+    RC insert_record(char *buf, Rid& rid, Context *context);
 
-    void insert_record(const Rid &rid, char *buf);
+    RC insert_record(const Rid &rid, char *buf);
 
-    void delete_record(const Rid &rid, Context *context);
+    RC delete_record(const Rid &rid, Context *context);
 
-    void update_record(const Rid &rid, char *buf, Context *context);
+    RC update_record(const Rid &rid, char *buf, Context *context);
 
-    RmPageHandle create_new_page_handle();
+    RC create_new_page_handle(RmPageHandle& handle);
 
-    RmPageHandle fetch_page_handle(int page_no) const;
+    RC fetch_page_handle(int page_no, RmPageHandle& handle) const;
 
    private:
-    RmPageHandle create_page_handle();
+    RC create_page_handle(RmPageHandle& handle);
 
-    void release_page_handle(RmPageHandle &page_handle);
+    RC release_page_handle(RmPageHandle &page_handle);
 };

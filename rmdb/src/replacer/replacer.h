@@ -11,6 +11,7 @@ See the Mulan PSL v2 for more details. */
 #pragma once
 
 #include "common/config.h"
+#include "common/rc.h"
 
 /**
  * Replacer is an abstract class that tracks page usage.
@@ -31,13 +32,13 @@ class Replacer {
      * Pins a frame, indicating that it should not be victimized until it is unpinned.
      * @param frame_id the id of the frame to pin
      */
-    virtual void pin(frame_id_t frame_id) = 0;
+    virtual RC pin(frame_id_t frame_id) = 0;
 
     /**
      * Unpins a frame, indicating that it can now be victimized.
      * @param frame_id the id of the frame to unpin
      */
-    virtual void unpin(frame_id_t frame_id) = 0;
+    virtual RC unpin(frame_id_t frame_id) = 0;
 
     /** @return the number of elements in the replacer that can be victimized */
     virtual size_t Size() = 0;

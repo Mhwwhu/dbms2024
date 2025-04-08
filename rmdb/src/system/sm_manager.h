@@ -52,27 +52,27 @@ class SmManager {
 
     IxManager* get_ix_manager() { return ix_manager_; }  
 
-    void create_db(const std::string& db_name);
+    RC create_db(const std::string& db_name);
 
-    void drop_db(const std::string& db_name);
+    RC drop_db(const std::string& db_name);
 
     RC open_db(const std::string& db_name);
 
-    void close_db();
+    RC close_db();
 
-    void flush_meta();
+    RC flush_meta();
 
     void show_tables(Context* context);
 
     void desc_table(const std::string& tab_name, Context* context);
 
-    void create_table(const std::string& tab_name, const std::vector<ColDef>& col_defs, Context* context);
+    RC create_table(const std::string& tab_name, const std::vector<ColDef>& col_defs, Context* context);
 
-    void drop_table(const std::string& tab_name, Context* context);
+    RC drop_table(const std::string& tab_name, Context* context);
 
-    void create_index(const std::string& tab_name, const std::vector<std::string>& col_names, Context* context);
+    RC create_index(const std::string& tab_name, const std::vector<std::string>& col_names, Context* context);
 
-    void drop_index(const std::string& tab_name, const std::vector<std::string>& col_names, Context* context);
+    RC drop_index(const std::string& tab_name, const std::vector<std::string>& col_names, Context* context);
     
-    void drop_index(const std::string& tab_name, const std::vector<ColMeta>& col_names, Context* context);
+    RC drop_index(const std::string& tab_name, const std::vector<ColMeta>& col_names, Context* context);
 };

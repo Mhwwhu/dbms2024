@@ -24,6 +24,7 @@ See the Mulan PSL v2 for more details. */
 #include "portal.h"
 #include "analyze/analyze.h"
 #include "operator/operator_generator.h"
+#include "printer/printer.h"
 
 #define SOCK_PORT 8765
 #define MAX_CONN_LIMIT 8
@@ -31,6 +32,7 @@ See the Mulan PSL v2 for more details. */
 static bool should_exit = false;
 
 // 构建全局所需的管理器对象
+auto printer_factory = std::make_unique<PrinterFactory>();
 auto disk_manager = std::make_unique<DiskManager>();
 auto buffer_pool_manager = std::make_unique<BufferPoolManager>(BUFFER_POOL_SIZE, disk_manager.get());
 auto rm_manager = std::make_unique<RmManager>(disk_manager.get(), buffer_pool_manager.get());
@@ -117,8 +119,11 @@ void *client_handler(void *sock_fd) {
         offset = 0;
 
         // 开启事务，初始化系统所需的上下文信息（包括事务对象指针、锁管理器指针、日志管理器指针、存放结果的buffer、记录结果长度的变量）
-        Context *context = new Context(lock_manager.get(), log_manager.get(),  nullptr, sm_manager.get(), data_send, &offset);
+        Context *context = new Context(lock_manager.get(), log_manager.get(),  nullptr, sm_manager.get(), txn_manager.get(), data_send, &offset);
         SetTransaction(&txn_id, context);
+
+        auto client_printer = printer_factory->get_printer(PrinterType::UNSAFE_PRINTER);
+        client_printer->init(fd);
 
         // 用于判断是否已经调用了yy_delete_buffer来删除buf
         bool finish_analyze = false;
@@ -142,7 +147,8 @@ void *client_handler(void *sock_fd) {
                     // portal
                     rc = portal->handle_request(context);
                     if(RM_FAIL(rc)) throw new RMDBError("execution failed");
-                    rc = portal->run(context);
+                    // rc = portal->run(context);
+                    rc = client_printer->write_result(context);
                     if(RM_FAIL(rc)) throw new RMDBError("getting result failed");
                     
                     portal->drop();

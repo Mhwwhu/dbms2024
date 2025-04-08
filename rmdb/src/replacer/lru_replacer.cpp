@@ -38,15 +38,17 @@ bool LRUReplacer::victim(frame_id_t* frame_id) {
  * @param {frame_id_t} 需要固定的frame的id
  * @note 该方法并不更新page的pin_count，并且允许忽略已经pinned的frame
  */
-void LRUReplacer::pin(frame_id_t frame_id) {
+RC LRUReplacer::pin(frame_id_t frame_id) {
     std::scoped_lock lock{latch_};
     // Todo:
     // 固定指定id的frame
     // 在数据结构中移除该frame
-    if(LRUhash_.find(frame_id) == LRUhash_.end()) return;
+    if(LRUhash_.find(frame_id) == LRUhash_.end()) return RC::SUCCESS;
     auto iter = LRUhash_[frame_id];
     LRUlist_.erase(iter);
     LRUhash_.erase(frame_id);
+
+    return RC::SUCCESS;
 }
 
 /**
@@ -54,14 +56,16 @@ void LRUReplacer::pin(frame_id_t frame_id) {
  * @param {frame_id_t} frame_id 取消固定的frame的id
  * @note 该方法并不更新page的pin_count
  */
-void LRUReplacer::unpin(frame_id_t frame_id) {
+RC LRUReplacer::unpin(frame_id_t frame_id) {
     std::scoped_lock lock{latch_};
     // Todo:
     //  支持并发锁
     //  选择一个frame取消固定
-    if(LRUhash_.find(frame_id) != LRUhash_.end()) return;
+    if(LRUhash_.find(frame_id) != LRUhash_.end()) return RC::SUCCESS;
     LRUlist_.push_front(frame_id);
     LRUhash_[frame_id] = LRUlist_.begin();
+
+    return RC::SUCCESS;
 }
 
 /**

@@ -361,12 +361,12 @@ bool IxIndexHandle::coalesce(IxNodeHandle **neighbor_node, IxNodeHandle **node, 
  * @note iid和rid存的不是一个东西，rid是上层传过来的记录位置，iid是索引内部生成的索引槽位置
  */
 Rid IxIndexHandle::get_rid(const Iid &iid) const {
-    IxNodeHandle *node = fetch_node(iid.page_no);
-    if (iid.slot_no >= node->get_size()) {
-        throw IndexEntryNotFoundError();
-    }
-    buffer_pool_manager_->unpin_page(node->get_page_id(), false);  // unpin it!
-    return *node->get_rid(iid.slot_no);
+    // IxNodeHandle *node = fetch_node(iid.page_no);
+    // if (iid.slot_no >= node->get_size()) {
+    //     throw IndexEntryNotFoundError();
+    // }
+    // buffer_pool_manager_->unpin_page(node->get_page_id(), false);  // unpin it!
+    // return *node->get_rid(iid.slot_no);
 }
 
 /**
@@ -425,10 +425,10 @@ Iid IxIndexHandle::leaf_begin() const {
  * @note pin the page, remember to unpin it outside!
  */
 IxNodeHandle *IxIndexHandle::fetch_node(int page_no) const {
-    Page *page = buffer_pool_manager_->fetch_page(PageId{fd_, page_no});
-    IxNodeHandle *node = new IxNodeHandle(file_hdr_, page);
+    // Page *page = buffer_pool_manager_->fetch_page(PageId{fd_, page_no});
+    // IxNodeHandle *node = new IxNodeHandle(file_hdr_, page);
     
-    return node;
+    // return node;
 }
 
 /**
@@ -442,14 +442,14 @@ IxNodeHandle *IxIndexHandle::fetch_node(int page_no) const {
  * 与Record的处理不同，Record将未插入满的记录页认为是free_page
  */
 IxNodeHandle *IxIndexHandle::create_node() {
-    IxNodeHandle *node;
-    file_hdr_->num_pages_++;
+    // IxNodeHandle *node;
+    // file_hdr_->num_pages_++;
 
-    PageId new_page_id = {.fd = fd_, .page_no = INVALID_PAGE_ID};
-    // 从3开始分配page_no，第一次分配之后，new_page_id.page_no=3，file_hdr_.num_pages=4
-    Page *page = buffer_pool_manager_->new_page(&new_page_id);
-    node = new IxNodeHandle(file_hdr_, page);
-    return node;
+    // PageId new_page_id = {.fd = fd_, .page_no = INVALID_PAGE_ID};
+    // // 从3开始分配page_no，第一次分配之后，new_page_id.page_no=3，file_hdr_.num_pages=4
+    // Page *page = buffer_pool_manager_->new_page(&new_page_id);
+    // node = new IxNodeHandle(file_hdr_, page);
+    // return node;
 }
 
 /**

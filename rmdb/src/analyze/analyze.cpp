@@ -10,6 +10,8 @@ See the Mulan PSL v2 for more details. */
 
 #include "analyze.h"
 #include "stmt/create_table_stmt.h"
+#include "stmt/drop_table_stmt.h"
+#include "stmt/insert_stmt.h"
 #include "common/context.h"
 
 /**
@@ -90,11 +92,19 @@ RC Analyze::do_analyze(std::shared_ptr<ast::TreeNode> root, std::shared_ptr<IStm
         rc = CreateTableStmt::create(sm_manager_, node, stmt);
         return rc;
     }
+    if(auto node = std::dynamic_pointer_cast<ast::DropTable>(root)) {
+        rc = DropTableStmt::create(sm_manager_, node, stmt);
+        return rc;
+    }
+    if(auto node = std::dynamic_pointer_cast<ast::InsertNode>(root)) {
+        rc = InsertStmt::create(sm_manager_, node, stmt);
+        return rc;
+    }
     return RC::INTERNAL;
 }
 
 
-TabCol Analyze::check_column(const std::vector<ColMeta> &all_cols, TabCol target) {
+// TabCol Analyze::check_column(const std::vector<ColMeta> &all_cols, TabCol target) {
     // if (target.tab_name.empty()) {
     //     // Table name not specified, infer table name from column name
     //     std::string tab_name;
@@ -114,23 +124,23 @@ TabCol Analyze::check_column(const std::vector<ColMeta> &all_cols, TabCol target
     //     /** TODO: Make sure target column exists */
         
     // }
-    return target;
-}
+//     return target;
+// }
 
-void Analyze::get_all_cols(const std::vector<std::string> &tab_names, std::vector<ColMeta> &all_cols) {
+// void Analyze::get_all_cols(const std::vector<std::string> &tab_names, std::vector<ColMeta> &all_cols) {
     // for (auto &sel_tab_name : tab_names) {
     //     // 这里db_不能写成get_db(), 注意要传指针
     //     const auto &sel_tab_cols = sm_manager_->db_.get_table(sel_tab_name).cols;
     //     all_cols.insert(all_cols.end(), sel_tab_cols.begin(), sel_tab_cols.end());
     // }
-}
+// }
 
 /**
  * 对每个条件表达式（sv_conds），将其左操作数和右操作数（可以是列或常量）提取出来
  * 如果右操作数是列，调用 check_column 来确保列名的正确性。
  * added by zxr
  */
-void Analyze::get_clause(const std::vector<std::shared_ptr<ast::BinaryExpr>> &sv_conds, std::vector<Condition> &conds) {
+// void Analyze::get_clause(const std::vector<std::shared_ptr<ast::BinaryExpr>> &sv_conds, std::vector<Condition> &conds) {
     // conds.clear();
     // for (auto &expr : sv_conds) {
     //     Condition cond;
@@ -145,14 +155,14 @@ void Analyze::get_clause(const std::vector<std::shared_ptr<ast::BinaryExpr>> &sv
     //     }
     //     conds.push_back(cond);
     // }
-}
+// }
 
 /**
  * 先检查左右操作数(字句)的字段是否存在于table中
  * 再检查左右操作数类型，要求一致才行
  * added by zxr
  */
-void Analyze::check_clause(const std::vector<std::string> &tab_names, std::vector<Condition> &conds) {
+// void Analyze::check_clause(const std::vector<std::string> &tab_names, std::vector<Condition> &conds) {
     // // auto all_cols = get_all_cols(tab_names);
     // std::vector<ColMeta> all_cols;
     // get_all_cols(tab_names, all_cols);
@@ -179,10 +189,10 @@ void Analyze::check_clause(const std::vector<std::string> &tab_names, std::vecto
     //         throw IncompatibleTypeError(coltype2str(lhs_type), coltype2str(rhs_type));
     //     }
     // }
-}
+// }
 
 
-Value Analyze::convert_sv_value(const std::shared_ptr<ast::Value> &sv_val) {
+// Value Analyze::convert_sv_value(const std::shared_ptr<ast::Value> &sv_val) {
     // Value val;
     // if (auto int_lit = std::dynamic_pointer_cast<ast::IntLit>(sv_val)) {
     //     val = Value(int_lit->val);
@@ -194,12 +204,12 @@ Value Analyze::convert_sv_value(const std::shared_ptr<ast::Value> &sv_val) {
     //     throw InternalError("Unexpected sv value type");
     // }
     // return val;
-}
+// }
 
-CompOp Analyze::convert_sv_comp_op(ast::SvCompOp op) {
-    std::map<ast::SvCompOp, CompOp> m = {
-        {ast::SV_OP_EQ, OP_EQ}, {ast::SV_OP_NE, OP_NE}, {ast::SV_OP_LT, OP_LT},
-        {ast::SV_OP_GT, OP_GT}, {ast::SV_OP_LE, OP_LE}, {ast::SV_OP_GE, OP_GE},
-    };
-    return m.at(op);
-}
+// CompOp Analyze::convert_sv_comp_op(ast::SvCompOp op) {
+//     std::map<ast::SvCompOp, CompOp> m = {
+//         {ast::SV_OP_EQ, OP_EQ}, {ast::SV_OP_NE, OP_NE}, {ast::SV_OP_LT, OP_LT},
+//         {ast::SV_OP_GT, OP_GT}, {ast::SV_OP_LE, OP_LE}, {ast::SV_OP_GE, OP_GE},
+//     };
+//     return m.at(op);
+// }

@@ -20,6 +20,8 @@
   DEFINE_RC(BUFFERPOOL_OPEN)             \
   DEFINE_RC(BUFFERPOOL_NOBUF)            \
   DEFINE_RC(BUFFERPOOL_INVALID_PAGE_NUM) \
+  DEFINE_RC(BUFFERPOOL_UNMAPPED_PAGE)    \
+  DEFINE_RC(PAGE_PIN_COUNT_ERR)          \
   DEFINE_RC(RECORD_OPENNED)              \
   DEFINE_RC(RECORD_INVALID_RID)          \
   DEFINE_RC(RECORD_INVALID_KEY)          \
@@ -48,6 +50,7 @@
   DEFINE_RC(IOERR_SEEK)                  \
   DEFINE_RC(IOERR_TOO_LONG)              \
   DEFINE_RC(IOERR_SYNC)                  \
+  DEFINE_RC(IOERR_UNLINK)                \
   DEFINE_RC(LOCKED_UNLOCK)               \
   DEFINE_RC(LOCKED_NEED_WAIT)            \
   DEFINE_RC(LOCKED_CONCURRENCY_CONFLICT) \
@@ -58,6 +61,7 @@
   DEFINE_RC(FILE_CREATE)                 \
   DEFINE_RC(FILE_OPEN)                   \
   DEFINE_RC(FILE_NOT_OPENED)             \
+  DEFINE_RC(FILE_NOT_CLOSED)             \
   DEFINE_RC(FILE_CLOSE)                  \
   DEFINE_RC(FILE_REMOVE)                 \
   DEFINE_RC(VARIABLE_NOT_EXISTS)         \
@@ -66,6 +70,12 @@
   DEFINE_RC(LOG_FILE_FULL)               \
   DEFINE_RC(LOG_ENTRY_INVALID)           \
   DEFINE_RC(JSON_PARSE_FAILED)           \
+  DEFINE_RC(OVERFLOW)                    \
+  DEFINE_RC(UNIX_ERROR)                  \
+  DEFINE_RC(DB_EXISTS)                   \
+  DEFINE_RC(DB_NOT_EXISTS)               \
+  DEFINE_RC(FIELD_NULLABLE_CONFLICT)     \
+  DEFINE_RC(IMPLICIT_INSERT_FIELD)       \
   DEFINE_RC(UNSUPPORTED)
 
 enum class RC

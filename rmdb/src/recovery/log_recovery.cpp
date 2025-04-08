@@ -13,20 +13,20 @@ See the Mulan PSL v2 for more details. */
 /**
  * @description: analyze阶段，需要获得脏页表（DPT）和未完成的事务列表（ATT）
  */
-void RecoveryManager::analyze() {
- 
+RC RecoveryManager::analyze() {
+	return RC::UNIMPLEMENTED;
 }
 
 /**
  * @description: 重做所有未落盘的操作
  */
-void RecoveryManager::redo() {
-
+RC RecoveryManager::redo() {
+	return RC::UNIMPLEMENTED;
 }
 
 /**
  * @description: 回滚未完成的事务
  */
-void RecoveryManager::undo() {
-
+RC RecoveryManager::undo() {
+	return RC::UNIMPLEMENTED;
 }

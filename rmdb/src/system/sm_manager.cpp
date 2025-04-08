@@ -27,17 +27,18 @@ using namespace std;
  * @description: 创建数据库，所有的数据库相关文件都放在数据库同名文件夹下
  * @param {string&} db_name 数据库名称
  */
-void SmManager::create_db(const std::string& db_name) {
+RC SmManager::create_db(const std::string& db_name) {
+    RC rc = RC::SUCCESS;
     if (disk_manager_->is_dir(db_name)) {
-        throw DatabaseExistsError(db_name);
+        return RC::DB_EXISTS;
     }
     //为数据库创建一个子目录
     std::string cmd = "mkdir " + db_name;
     if (system(cmd.c_str()) < 0) {  // 创建一个名为db_name的目录
-        throw UnixError();
+        return RC::UNIX_ERROR;
     }
     if (chdir(db_name.c_str()) < 0) {  // 进入名为db_name的目录
-        throw UnixError();
+        return RC::UNIX_ERROR;
     }
     //创建系统目录
     DbMeta *new_db = new DbMeta();
@@ -47,16 +48,16 @@ void SmManager::create_db(const std::string& db_name) {
     std::ofstream ofs(DB_META_NAME);
 
     // 将new_db中的信息写入到ofs打开的DB_META_NAME文件中
-    new_db->serialize(ofs);
-
+    rc = new_db->serialize(ofs);
     delete new_db;
+    if(RM_FAIL(rc)) return rc;
 
     // 创建日志文件
-    disk_manager_->create_file(LOG_FILE_NAME);
+    if(RM_FAIL(rc = disk_manager_->create_file(LOG_FILE_NAME))) return rc;
 
     // 回到根目录
     if (chdir("..") < 0) {
-        throw UnixError();
+        return RC::UNIX_ERROR;
     }
 }
 
@@ -64,14 +65,15 @@ void SmManager::create_db(const std::string& db_name) {
  * @description: 删除数据库，同时需要清空相关文件以及数据库同名文件夹
  * @param {string&} db_name 数据库名称，与文件夹同名
  */
-void SmManager::drop_db(const std::string& db_name) {
+RC SmManager::drop_db(const std::string& db_name) {
     if (!disk_manager_->is_dir(db_name)) {
-        throw DatabaseNotFoundError(db_name);
+        RC::DB_NOT_EXISTS;
     }
     std::string cmd = "rm -r " + db_name;
     if (system(cmd.c_str()) < 0) {
-        throw UnixError();
+        return RC::UNIX_ERROR;
     }
+    return RC::SUCCESS;
 }
 
 /**
@@ -80,23 +82,32 @@ void SmManager::drop_db(const std::string& db_name) {
  */
 RC SmManager::open_db(const std::string& db_name) {
     std::ifstream is(db_name + '/' + DB_META_NAME);
-    return db_.deserialize(is);
+    RC rc = db_.deserialize(is);
+    if(RM_FAIL(rc)) return rc;
+    // 初始化fhs_
+    for(auto pair : db_.tabs_) {
+        string tab_path = db_name + '/' + pair.first;
+        std::unique_ptr<RmFileHandle> rm_file_handle;
+        if(RM_FAIL(rc = rm_manager_->open_file(tab_path, rm_file_handle))) return rc;
+        fhs_.emplace(pair.first, std::move(rm_file_handle));
+    }
+    // TODO: 初始化ihs_
 }
 
 /**
  * @description: 把数据库相关的元数据刷入磁盘中
  */
-void SmManager::flush_meta() {
+RC SmManager::flush_meta() {
     // 默认清空文件
     std::ofstream ofs(db_.name_ + '/' + DB_META_NAME);
-    db_.serialize(ofs);
+    return db_.serialize(ofs);
 }
 
 /**
  * @description: 关闭数据库并把数据落盘
  */
-void SmManager::close_db() {
-    
+RC SmManager::close_db() {
+    return RC::UNIMPLEMENTED;
 }
 
 /**
@@ -149,9 +160,10 @@ void SmManager::desc_table(const std::string& tab_name, Context* context) {
  * @param {vector<ColDef>&} col_defs 表的字段
  * @param {Context*} context 
  */
-void SmManager::create_table(const std::string& tab_name, const std::vector<ColDef>& col_defs, Context* context) {
+RC SmManager::create_table(const std::string& tab_name, const std::vector<ColDef>& col_defs, Context* context) {
+    RC rc = RC::SUCCESS;
     if (db_.is_table(tab_name)) {
-        throw TableExistsError(tab_name);
+        return RC::SCHEMA_TABLE_EXIST;
     }
     // Create table meta
     int curr_offset = 0;
@@ -173,12 +185,16 @@ void SmManager::create_table(const std::string& tab_name, const std::vector<ColD
     // Create & open record file
     int record_size = curr_offset;  // record_size就是col meta所占的大小（表的元数据也是以记录的形式进行存储的）
     string tab_path = db_.name_ + '/' + tab_name;
-    rm_manager_->create_file(tab_path, record_size);
+    if(RM_FAIL(rc = rm_manager_->create_file(tab_path, record_size))) return rc;
     db_.tabs_[tab_name] = tab;
     // fhs_[tab_name] = rm_manager_->open_file(tab_name);
-    fhs_.emplace(tab_name, rm_manager_->open_file(tab_path));
+    std::unique_ptr<RmFileHandle> rm_file_handle;
+    if(RM_FAIL(rc = rm_manager_->open_file(tab_path, rm_file_handle))) return rc;
+    fhs_.emplace(tab_name, std::move(rm_file_handle));
 
-    flush_meta();
+    if(RM_FAIL(rc = flush_meta())) return rc;
+
+    return RC::SUCCESS;
 }
 
 /**
@@ -186,8 +202,25 @@ void SmManager::create_table(const std::string& tab_name, const std::vector<ColD
  * @param {string&} tab_name 表的名称
  * @param {Context*} context
  */
-void SmManager::drop_table(const std::string& tab_name, Context* context) {
-    
+RC SmManager::drop_table(const std::string& tab_name, Context* context) {
+    RC rc;
+    if(!db_.is_table(tab_name)) {
+        return RC::SCHEMA_TABLE_NOT_EXIST;
+    }
+
+    string tab_path = db_.name_ + '/' + tab_name;
+
+    if(RM_FAIL(rc = rm_manager_->close_file(fhs_.at(tab_name).get()))) return rc;
+    if(RM_FAIL(rc = rm_manager_->destroy_file(tab_path))) return rc;
+
+    // TODO: 还要删除与table相关的所有索引
+
+    fhs_.erase(tab_name);
+    db_.tabs_.erase(tab_name);
+
+    if(RM_FAIL(rc = flush_meta())) return rc;
+
+    return RC::SUCCESS;
 }
 
 /**
@@ -196,8 +229,8 @@ void SmManager::drop_table(const std::string& tab_name, Context* context) {
  * @param {vector<string>&} col_names 索引包含的字段名称
  * @param {Context*} context
  */
-void SmManager::create_index(const std::string& tab_name, const std::vector<std::string>& col_names, Context* context) {
-    
+RC SmManager::create_index(const std::string& tab_name, const std::vector<std::string>& col_names, Context* context) {
+    return RC::UNIMPLEMENTED;
 }
 
 /**
@@ -206,8 +239,8 @@ void SmManager::create_index(const std::string& tab_name, const std::vector<std:
  * @param {vector<string>&} col_names 索引包含的字段名称
  * @param {Context*} context
  */
-void SmManager::drop_index(const std::string& tab_name, const std::vector<std::string>& col_names, Context* context) {
-    
+RC SmManager::drop_index(const std::string& tab_name, const std::vector<std::string>& col_names, Context* context) {
+    return RC::UNIMPLEMENTED;
 }
 
 /**
@@ -216,6 +249,6 @@ void SmManager::drop_index(const std::string& tab_name, const std::vector<std::s
  * @param {vector<ColMeta>&} 索引包含的字段元数据
  * @param {Context*} context
  */
-void SmManager::drop_index(const std::string& tab_name, const std::vector<ColMeta>& cols, Context* context) {
-    
+RC SmManager::drop_index(const std::string& tab_name, const std::vector<ColMeta>& cols, Context* context) {
+    return RC::UNIMPLEMENTED;
 }

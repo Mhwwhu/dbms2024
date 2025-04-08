@@ -202,12 +202,13 @@ struct TabMeta {
     // }
 
     /* 根据字段名称获取字段元数据 */
-    std::vector<ColMeta>::iterator get_col(const std::string &col_name) {
+    RC get_col(const std::string &col_name, ColMeta& col) {
         auto pos = std::find_if(cols.begin(), cols.end(), [&](const ColMeta &col) { return col.name == col_name; });
         if (pos == cols.end()) {
-            throw ColumnNotFoundError(col_name);
+            return RC::SCHEMA_FIELD_NOT_EXIST;
         }
-        return pos;
+        col = *pos;
+        return RC::SUCCESS;
     }
 
     Json::Value to_json() {
@@ -282,13 +283,14 @@ class DbMeta {
     }
 
     /* 获取指定名称表的元数据 */
-    TabMeta &get_table(const std::string &tab_name) {
+    RC get_table(const std::string &tab_name, TabMeta& tab_meta) {
         auto pos = tabs_.find(tab_name);
         if (pos == tabs_.end()) {
-            throw TableNotFoundError(tab_name);
+            return RC::SCHEMA_TABLE_NOT_EXIST;
         }
 
-        return pos->second;
+        tab_meta = pos->second;
+        return RC::SUCCESS;
     }
 
     Json::Value to_json()

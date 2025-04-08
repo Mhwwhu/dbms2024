@@ -1,6 +1,6 @@
 #pragma once
 
-#include "rc.h"
+#include "common/rc.h"
 #include "system/sm_manager.h"
 #include "parser/ast.h"
 

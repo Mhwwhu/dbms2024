@@ -27,6 +27,8 @@ See the Mulan PSL v2 for more details. */
 #include "analyze/analyze.h"
 #include "analyze/stmt/stmt.h"
 #include "analyze/stmt/create_table_stmt.h"
+#include "analyze/stmt/insert_stmt.h"
+#include "analyze/stmt/select_stmt.h"
 
 class Planner {
    private:
@@ -58,6 +60,8 @@ class Planner {
    private:
 
    RC create_plan(std::shared_ptr<CreateTableStmt> stmt, std::shared_ptr<Plan>& plan);
+   RC create_plan(std::shared_ptr<InsertStmt> stmt, std::shared_ptr<Plan>& plan);
+   RC create_plan(std::shared_ptr<SelectStmt> stmt, std::shared_ptr<Plan>& plan);
 
     /**
      * todo

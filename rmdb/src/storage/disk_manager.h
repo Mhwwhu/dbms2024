@@ -22,6 +22,7 @@ See the Mulan PSL v2 for more details. */
 
 #include "common/config.h"
 #include "errors.h"  
+#include "common/rc.h"
 
 /**
  * @description: DiskManager的作用主要是根据上层的需要对磁盘文件进行操作
@@ -32,42 +33,42 @@ class DiskManager {
 
     ~DiskManager() = default;
 
-    void write_page(int fd, page_id_t page_no, const char *offset, int num_bytes);
+    RC write_page(int fd, page_id_t page_no, const char *offset, int num_bytes);
 
-    void read_page(int fd, page_id_t page_no, char *offset, int num_bytes);
+    RC read_page(int fd, page_id_t page_no, char *offset, int num_bytes);
 
     page_id_t allocate_page(int fd);
 
-    void deallocate_page(page_id_t page_id);
+    RC deallocate_page(page_id_t page_id);
 
     /*目录操作*/
     bool is_dir(const std::string &path);
 
-    void create_dir(const std::string &path);
+    RC create_dir(const std::string &path);
 
-    void destroy_dir(const std::string &path);
+    RC destroy_dir(const std::string &path);
 
     /*文件操作*/
     bool is_file(const std::string &path);
 
-    void create_file(const std::string &path);
+    RC create_file(const std::string &path);
 
-    void destroy_file(const std::string &path);
+    RC destroy_file(const std::string &path);
 
-    int open_file(const std::string &path);
+    RC open_file(const std::string &path, int& fd);
 
-    void close_file(int fd);
+    RC close_file(int fd);
 
-    int get_file_size(const std::string &file_name);
+    RC get_file_size(const std::string &file_name, int& size);
 
-    std::string get_file_name(int fd);
+    RC get_file_name(int fd, std::string& name);
 
-    int get_file_fd(const std::string &file_name);
+    RC get_file_fd(const std::string &file_name, int& fd);
 
     /*日志操作*/
-    int read_log(char *log_data, int size, int offset);
+    RC read_log(char *log_data, int size, int offset, int& read_size);
 
-    void write_log(char *log_data, int size);
+    RC write_log(char *log_data, int size);
 
     void SetLogFd(int log_fd) { log_fd_ = log_fd; }
 

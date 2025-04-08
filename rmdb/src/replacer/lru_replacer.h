@@ -33,9 +33,9 @@ class LRUReplacer : public Replacer {
 
     bool victim(frame_id_t *frame_id);
 
-    void pin(frame_id_t frame_id);
+    RC pin(frame_id_t frame_id);
 
-    void unpin(frame_id_t frame_id);
+    RC unpin(frame_id_t frame_id);
 
     size_t Size();
 
