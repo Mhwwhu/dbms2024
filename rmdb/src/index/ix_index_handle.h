@@ -74,7 +74,7 @@ class IxNodeHandle {
         rids = reinterpret_cast<Rid *>(keys + file_hdr->keys_size_);
     }
 
-    int get_size() { return page_hdr->num_key; }
+    int get_size() const { return page_hdr->num_key; }
 
     void set_size(int size) { page_hdr->num_key = size; }
 
@@ -82,6 +82,7 @@ class IxNodeHandle {
 
     int get_min_size() { return get_max_size() / 2; }
 
+    //为什么要强转为int？ by zxr
     int key_at(int i) { return *(int *)get_key(i); }
 
     /* 得到第i个孩子结点的page_no */
@@ -119,8 +120,6 @@ class IxNodeHandle {
 
     int upper_bound(const char *target) const;
 
-    void insert_pairs(int pos, const char *key, const Rid *rid, int n);
-
     page_id_t internal_lookup(const char *key);
 
     bool leaf_lookup(const char *key, Rid **value);
@@ -128,7 +127,9 @@ class IxNodeHandle {
     int insert(const char *key, const Rid &value);
 
     // 用于在结点中的指定位置插入单个键值对
-    void insert_pair(int pos, const char *key, const Rid &rid) { insert_pairs(pos, key, &rid, 1); }
+    RC insert_pair(int pos, const char *key, const Rid &rid) { return insert_pairs(pos, key, &rid, 1); }
+
+    RC insert_pairs(int pos, const char *key, const Rid *rid, int n);
 
     void erase_pair(int pos);
 
