@@ -43,7 +43,7 @@ RC UnsafePrinter::write_state(Context* ctx)
 
 RC UnsafePrinter::write_result_internal(Context* ctx)
 {
-    auto sql_result = ctx->sql_result;
+    auto& sql_result = ctx->sql_result;
 
     if((sql_result.has_result() && RM_FAIL(sql_result.return_code())) || !sql_result.oper()) {
         return write_state(ctx);
@@ -52,6 +52,14 @@ RC UnsafePrinter::write_result_internal(Context* ctx)
     auto oper = sql_result.oper();
     RC rc = oper->open(ctx);
     if(RM_FAIL(rc)) {
+        oper->close();
+        sql_result.set_return_code(rc);
+        return write_state(ctx);
+    }
+
+
+    // 如果没有tuple，比如InsertOper, DeleteOper等，则也要输出rc的结果
+    if(!oper->has_tuple()) {
         oper->close();
         sql_result.set_return_code(rc);
         return write_state(ctx);

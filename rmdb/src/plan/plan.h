@@ -21,6 +21,7 @@ See the Mulan PSL v2 for more details. */
 
 typedef enum PlanTag{
    INSERT_PLAN,
+   PROJECT_PLAN,
 } PlanTag;
 
 // 查询执行计划

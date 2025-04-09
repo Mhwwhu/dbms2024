@@ -12,8 +12,7 @@ RC InsertStmt::create(SmManager* sm_manager, std::shared_ptr<ast::InsertNode> in
 
     // 检查是否存在表
     TabMeta table_meta;
-    string tab_name = insert_node->tab_name;
-    if(RM_FAIL(rc = sm_manager->db_.get_table(tab_name, table_meta))) return rc; 
+    if(RM_FAIL(rc = sm_manager->db_.get_table(table_name, table_meta))) return rc; 
 
     // 检查声明插入的列是否存在，如果为空则将设置decl_cols为所有列 && 检查未声明的列是否可以为空
     vector<ColMeta> decl_cols;

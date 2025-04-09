@@ -87,6 +87,9 @@ void *client_handler(void *sock_fd) {
     std::string output = "establish client connection, sockfd: " + std::to_string(fd) + "\n";
     std::cout << output;
 
+    auto client_printer = printer_factory->get_printer(PrinterType::UNSAFE_PRINTER);
+    client_printer->init(fd);
+
     while (true) {
         std::cout << "Waiting for request..." << std::endl;
         memset(data_recv, 0, BUFFER_LENGTH);
@@ -99,6 +102,7 @@ void *client_handler(void *sock_fd) {
         }
         if (i_recvBytes == -1) {
             std::cout << "Client read error!" << std::endl;
+            std::cout << errno << std::endl;
             break;
         }
         
@@ -121,9 +125,6 @@ void *client_handler(void *sock_fd) {
         // 开启事务，初始化系统所需的上下文信息（包括事务对象指针、锁管理器指针、日志管理器指针、存放结果的buffer、记录结果长度的变量）
         Context *context = new Context(lock_manager.get(), log_manager.get(),  nullptr, sm_manager.get(), txn_manager.get(), data_send, &offset);
         SetTransaction(&txn_id, context);
-
-        auto client_printer = printer_factory->get_printer(PrinterType::UNSAFE_PRINTER);
-        client_printer->init(fd);
 
         // 用于判断是否已经调用了yy_delete_buffer来删除buf
         bool finish_analyze = false;
@@ -190,9 +191,9 @@ void *client_handler(void *sock_fd) {
         }
         // future TODO: 格式化 sql_handler.result, 传给客户端
         // send result with fixed format, use protobuf in the future
-        if (write(fd, data_send, offset + 1) == -1) {
-            break;
-        }
+        // if (write(fd, data_send, offset + 1) == -1) {
+        //     break;
+        // }
         // 如果是单挑语句，需要按照一个完整的事务来执行，所以执行完当前语句后，自动提交事务
         if(context->txn_->get_txn_mode() == false)
         {
@@ -202,7 +203,6 @@ void *client_handler(void *sock_fd) {
 
     // Clear
     std::cout << "Terminating current client_connection..." << std::endl;
-    close(fd);           // close a file descriptor.
     pthread_exit(NULL);  // terminate calling thread!
 }
 
@@ -298,13 +298,22 @@ int main(int argc, char **argv) {
                      "Type 'help;' for help.\n"
                      "\n";
         // Database name is passed by args
+        RC rc;
         std::string db_name = argv[1];
         if (!disk_manager->is_dir(db_name)) {
             // Database not found, create a new one
-            sm_manager->create_db(db_name);
+            rc = sm_manager->create_db(db_name);
+            if(RM_FAIL(rc)) {
+                std::cout<< strrc(rc) << std::endl;
+                exit(1);
+            }
         }
         // Open database
-        sm_manager->open_db(db_name);
+        rc = sm_manager->open_db(db_name);
+        if(RM_FAIL(rc)) {
+            std::cout<< strrc(rc) << std::endl;
+            exit(1);
+        }
 
         // recovery database
         recovery->analyze();

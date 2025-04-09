@@ -332,12 +332,13 @@ class DbMeta {
     RC serialize(std::ostream& os)
     {
         Json::StreamWriterBuilder builder;
-        Json::StreamWriter* writer = builder.newStreamWriter();
 
         std::streampos old_pos = os.tellp();
-        writer->write(to_json(), &os);
+        auto jsonString = Json::writeString(builder, to_json());
+        os << jsonString << std::endl;
+        std::streampos new_pos = os.tellp();
+        if(new_pos - old_pos <= 0) return RC::IOERR_WRITE;
 
-        delete writer;
         return RC::SUCCESS;
     }
 

@@ -19,13 +19,20 @@ public:
 
     RC close() override { return RC::SUCCESS; }
 
-    std::shared_ptr<ITuple> current_tuple() const override { return chunk_[idx_]; }
+    std::shared_ptr<ITuple> current_tuple() const override
+    { 
+        if(idx_ < 0 || idx_ >= chunk_.size()) return nullptr;
+        return chunk_[idx_]; 
+    }
 
     RC tuple_schema(TupleSchema& schema) const override 
     {
-         schema = tuple_schema_[idx_];
-         return RC::SUCCESS;
+        if(idx_ < 0) return RC::INTERNAL;
+        schema = tuple_schema_[idx_];
+        return RC::SUCCESS;
     }
+
+    bool has_tuple() const override { return true; }
 
 private:
     std::vector<std::shared_ptr<ITuple>> chunk_;

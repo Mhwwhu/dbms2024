@@ -14,11 +14,12 @@ RC OperatorGenerator::generate(std::shared_ptr<Plan> plan, std::shared_ptr<Opera
 
 RC OperatorGenerator::create_operator(std::shared_ptr<InsertPlan> plan, std::shared_ptr<Operator>& oper)
 {
-    // InsertPlan的child有且只能有一个，要么是ChunkGetOper，要么是ProjectionOper
-    if(plan->children().size() != 1) return RC::INTERNAL;
-    auto child = plan->children().front();
+    // InsertPlan的child最多只能有一个，即ProjectPlan
+    if(plan->children().size() == 1 && plan->children().front()->type() != PlanTag::PROJECT_PLAN) return RC::INTERNAL;
+    if(plan->children().size() > 1) return RC::INTERNAL;
+    auto child = plan->children().empty() ? nullptr : plan->children().front();
 
-    if(child->type() == OperatorType::CHUNK_GET_OPER) {
+    if(!child) {
         std::vector<std::shared_ptr<ITuple>> chunk;
         std::vector<TupleSchema> schema;
         auto rows = plan->opt_insert_rows();

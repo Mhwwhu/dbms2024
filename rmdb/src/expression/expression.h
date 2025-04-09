@@ -32,7 +32,7 @@ class Expression
 {
 public:
 	Expression() = default;
-	virtual ~Expression() = 0;
+	virtual ~Expression() = default;
 
 	/**
 	 * @brief 判断两个表达式是否相等

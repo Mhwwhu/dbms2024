@@ -22,7 +22,7 @@ public:
 
     virtual OperatorType type() const = 0;
 
-    virtual RC open(Context* ctx) = 0;
+    virtual RC open(Context*) = 0;
 
     virtual RC next() = 0;
 
@@ -35,6 +35,8 @@ public:
     virtual std::shared_ptr<ITuple> current_tuple() const = 0;
 
     virtual RC tuple_schema(TupleSchema& schema) const = 0;
+
+    virtual bool has_tuple() const = 0;
 protected:
     std::vector<std::shared_ptr<Operator>> children_;
 };

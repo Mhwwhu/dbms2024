@@ -21,6 +21,8 @@ public:
 
     RC tuple_schema(TupleSchema& schema) const override { return RC::UNSUPPORTED; }
 
+    bool has_tuple() const override { return false; }
+
 private:
     RC make_record(std::shared_ptr<ITuple> tuple, std::shared_ptr<RmRecord>& record);
 

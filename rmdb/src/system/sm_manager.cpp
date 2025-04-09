@@ -92,6 +92,8 @@ RC SmManager::open_db(const std::string& db_name) {
         fhs_.emplace(pair.first, std::move(rm_file_handle));
     }
     // TODO: 初始化ihs_
+
+    return RC::SUCCESS;
 }
 
 /**

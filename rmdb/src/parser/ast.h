@@ -236,6 +236,7 @@ struct SemValue {
 
     std::shared_ptr<Expression> sv_expr;
     std::vector<std::shared_ptr<Expression>> sv_exprs;
+    std::vector<std::vector<std::shared_ptr<Expression>>> sv_expr_chunk;
 
     std::shared_ptr<Value> sv_val;
     std::vector<std::shared_ptr<Value>> sv_vals;
