@@ -579,9 +579,9 @@ static const yytype_int16 yyrline[] =
 {
        0,    62,    62,    67,    72,    77,    85,    86,    87,    88,
       93,    97,   101,   105,   112,   126,   130,   134,   165,   171,
-     176,   177,   183,   186,   192,   196,   203,   207,   214,   221,
-     225,   229,   247,   251,   255,   259,   323,   326,   333,   406,
-     408
+     176,   177,   183,   186,   193,   197,   204,   208,   215,   222,
+     226,   230,   248,   252,   256,   260,   324,   327,   334,   407,
+     409
 };
 #endif
 
@@ -1719,137 +1719,138 @@ yyreduce:
   case 23: /* insertList: insertList ',' '(' exprList ')'  */
 #line 186 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
                                         {
+        (yyval.sv_expr_chunk) = std::vector<std::vector<std::shared_ptr<Expression>>>();
         std::move((yyvsp[-4].sv_expr_chunk).begin(), (yyvsp[-4].sv_expr_chunk).end(), std::back_inserter((yyval.sv_expr_chunk)));
         (yyval.sv_expr_chunk).push_back(std::move((yyvsp[-1].sv_exprs)));
     }
-#line 1726 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
+#line 1727 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 24: /* fieldList: field  */
-#line 193 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
+#line 194 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_fields) = std::vector<std::shared_ptr<Field>>{(yyvsp[0].sv_field)};
     }
-#line 1734 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
+#line 1735 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 25: /* fieldList: fieldList ',' field  */
-#line 197 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
+#line 198 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_fields).push_back((yyvsp[0].sv_field));
     }
-#line 1742 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
+#line 1743 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 26: /* colNameList: colName  */
-#line 204 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
+#line 205 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_strs) = std::vector<std::string>{(yyvsp[0].sv_str)};
     }
-#line 1750 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
+#line 1751 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 27: /* colNameList: colNameList ',' colName  */
-#line 208 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
+#line 209 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_strs).push_back((yyvsp[0].sv_str));
     }
-#line 1758 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
+#line 1759 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 28: /* field: colName type  */
-#line 215 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
+#line 216 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_field) = std::make_shared<Field>((yyvsp[-1].sv_str), (yyvsp[0].sv_type_len));
     }
-#line 1766 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
+#line 1767 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 29: /* type: INT  */
-#line 222 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
+#line 223 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_type_len) = std::make_shared<TypeLen>(AttrType::INTS, sizeof(int));
     }
-#line 1774 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
+#line 1775 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 30: /* type: CHAR '(' VALUE_INT ')'  */
-#line 226 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
+#line 227 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_type_len) = std::make_shared<TypeLen>(AttrType::CHARS, (yyvsp[-1].sv_int));
     }
-#line 1782 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
+#line 1783 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 31: /* type: FLOAT  */
-#line 230 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
+#line 231 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_type_len) = std::make_shared<TypeLen>(AttrType::FLOATS, sizeof(float));
     }
-#line 1790 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
+#line 1791 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 32: /* value: VALUE_INT  */
-#line 248 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
+#line 249 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_val) = std::make_shared<Value>((yyvsp[0].sv_int));
     }
-#line 1798 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
+#line 1799 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 33: /* value: VALUE_FLOAT  */
-#line 252 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
+#line 253 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_val) = std::make_shared<Value>((yyvsp[0].sv_float));
     }
-#line 1806 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
+#line 1807 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 34: /* value: VALUE_STRING  */
-#line 256 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
+#line 257 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_val) = std::make_shared<Value>((yyvsp[0].sv_str).c_str());
     }
-#line 1814 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
+#line 1815 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 35: /* value: VALUE_BOOL  */
-#line 260 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
+#line 261 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_val) = std::make_shared<Value>((yyvsp[0].sv_bool));
     }
-#line 1822 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
+#line 1823 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 36: /* exprList: expr  */
-#line 323 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
+#line 324 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
          {
         (yyval.sv_exprs) = std::vector<std::shared_ptr<Expression>>();
         (yyval.sv_exprs).push_back(std::move((yyvsp[0].sv_expr)));
     }
-#line 1831 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
+#line 1832 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 37: /* exprList: exprList ',' expr  */
-#line 326 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
+#line 327 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
                           {
         (yyval.sv_exprs) = std::vector<std::shared_ptr<Expression>>();
         std::move((yyvsp[-2].sv_exprs).begin(), (yyvsp[-2].sv_exprs).end(), std::back_inserter((yyval.sv_exprs)));
         (yyval.sv_exprs).push_back(std::move((yyvsp[0].sv_expr)));
     }
-#line 1841 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
+#line 1842 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 38: /* expr: value  */
-#line 333 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
+#line 334 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
           {
         (yyval.sv_expr) = std::make_shared<ValueExpr>(*(yyvsp[0].sv_val));
     }
-#line 1849 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
+#line 1850 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
     break;
 
 
-#line 1853 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
+#line 1854 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.tab.cpp"
 
       default: break;
     }
@@ -2078,5 +2079,5 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 409 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
+#line 410 "/home/mhwwhu/db2024/rmdb/src/parser/yacc.y"
 

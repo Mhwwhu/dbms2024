@@ -20,6 +20,7 @@ See the Mulan PSL v2 for more details. */
 #include "sm_defs.h"
 #include "common/rc.h"
 #include "deps/jsoncpp/json/json.h"
+#include "common/type/attr_type.h"
 
 static const Json::StaticString FIELD_COL_NAME("name");
 static const Json::StaticString FIELD_COL_TYPE("type");
@@ -92,7 +93,7 @@ struct ColMeta {
         if (!nullable_value.isBool()) {
             return RC::JSON_PARSE_FAILED;
         }
-        AttrType type = attr_type_from_string(type_value.asCString());
+        type = attr_type_from_string(type_value.asCString());
         if (AttrType::UNDEFINED == type) {
             return RC::INTERNAL;
         }

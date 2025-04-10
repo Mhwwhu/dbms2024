@@ -184,6 +184,7 @@ insertList:
         $$ = std::vector<std::vector<std::shared_ptr<Expression>>>();
         $$.push_back(std::move($3));
     } | insertList ',' '(' exprList ')' {
+        $$ = std::vector<std::vector<std::shared_ptr<Expression>>>();
         std::move($1.begin(), $1.end(), std::back_inserter($$));
         $$.push_back(std::move($4));
     }

@@ -87,7 +87,7 @@ RC Analyze::handle_request(Context* context)
 
 RC Analyze::do_analyze(std::shared_ptr<ast::TreeNode> root, std::shared_ptr<IStmt>& stmt)
 {
-    RC rc;
+    RC rc = RC::SUCCESS;
     if(auto node = std::dynamic_pointer_cast<ast::CreateTable>(root)) {
         rc = CreateTableStmt::create(sm_manager_, node, stmt);
         return rc;

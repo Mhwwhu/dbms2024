@@ -65,13 +65,13 @@ class BufferPoolManager {
     static void mark_dirty(Page* page) { page->is_dirty_ = true; }
 
    public: 
-    RC fetch_page(PageId page_id, Page* page);
+    RC fetch_page(PageId page_id, Page*& page);
 
     RC unpin_page(PageId page_id, bool is_dirty);
 
     RC flush_page(PageId page_id);
 
-    RC new_page(PageId* page_id, Page* page);
+    RC new_page(PageId* page_id, Page*& page);
 
     RC delete_page(PageId page_id);
 

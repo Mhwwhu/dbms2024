@@ -59,6 +59,7 @@ RC SmManager::create_db(const std::string& db_name) {
     if (chdir("..") < 0) {
         return RC::UNIX_ERROR;
     }
+    return RC::SUCCESS;
 }
 
 /**
@@ -109,7 +110,19 @@ RC SmManager::flush_meta() {
  * @description: 关闭数据库并把数据落盘
  */
 RC SmManager::close_db() {
-    return RC::UNIMPLEMENTED;
+    RC rc = RC::SUCCESS;
+
+    if(RM_FAIL(rc = flush_meta())) return rc;
+
+    // 将table落盘
+    for(auto table : db_.tabs_) {
+        rc = rm_manager_->close_file(fhs_[table.first].get());
+        if(RM_FAIL(rc)) return rc;
+    }
+
+    //TODO: 将index落盘
+
+    return RC::SUCCESS;
 }
 
 /**

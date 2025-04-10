@@ -42,7 +42,7 @@ RC InsertOper::open(Context* ctx)
 RC InsertOper::make_record(std::shared_ptr<ITuple> tuple, std::shared_ptr<RmRecord>& record)
 {
     vector<Value> values;
-    RC rc;
+    RC rc = RC::SUCCESS;
     for(size_t i = 0; i < tuple->cell_num(); i++) {
         Value val;
         if(RM_FAIL(rc = tuple->cell_at(i, val))) return rc;
@@ -63,6 +63,7 @@ RC InsertOper::make_record(std::shared_ptr<ITuple> tuple, std::shared_ptr<RmReco
     record_size += bitmap_size; 
 
     char* record_buf = new char[record_size];
+    memset(record_buf, 0, record_size);
 
     Bitmap::init(record_buf + bitmap_offset, bitmap_size, true);
     
@@ -73,7 +74,7 @@ RC InsertOper::make_record(std::shared_ptr<ITuple> tuple, std::shared_ptr<RmReco
         int id = col.id;
         // 检查是否为null，如果不是才要拷贝data
         if(!values[iter].isnull()) {
-            memcpy(record_buf + offset, values[iter].data(), size);
+            memcpy(record_buf + offset, values[iter].data(), std::min(size, values[iter].length()));
             Bitmap::reset(record_buf + bitmap_offset, id);
         }
         else if(col.nullable) {
@@ -83,6 +84,7 @@ RC InsertOper::make_record(std::shared_ptr<ITuple> tuple, std::shared_ptr<RmReco
             // not nullable的字段插入了null值，失败
             return RC::FIELD_NULLABLE_CONFLICT;
         }
+        iter++;
     }
     record = std::make_shared<RmRecord>(record_size, record_buf);
     return RC::SUCCESS;

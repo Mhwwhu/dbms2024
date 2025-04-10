@@ -41,7 +41,7 @@ RC BufferPoolManager::update_page(Page *page, PageId new_page_id, frame_id_t new
     // 1 如果是脏页，写回磁盘，并且把dirty置为false
     // 2 更新page table
     // 3 重置page的data，更新page id
-    RC rc;
+    RC rc = RC::SUCCESS;
     if(page->is_dirty()) rc = flush_page_unsafe(page);
     if(RM_FAIL(rc)) return rc;
     page_table_.erase(page->id_);
@@ -75,7 +75,7 @@ RC BufferPoolManager::flush_page_unsafe(Page* page)
  * @return {Page*} 若获得了需要的页则将其返回，否则返回nullptr
  * @param {PageId} page_id 需要获取的页的PageId
  */
-RC BufferPoolManager::fetch_page(PageId page_id, Page* page) {
+RC BufferPoolManager::fetch_page(PageId page_id, Page*& page) {
     //Todo:
     // 1.     从page_table_中搜寻目标页
     // 1.1    若目标页有被page_table_记录，则将其所在frame固定(pin)，并返回目标页。
@@ -166,7 +166,7 @@ RC BufferPoolManager::flush_page(PageId page_id) {
  * @return {Page*} 返回新创建的page，若创建失败则返回nullptr
  * @param {PageId*} page_id 当成功创建一个新的page时存储其page_id
  */
-RC BufferPoolManager::new_page(PageId* page_id, Page* page) {
+RC BufferPoolManager::new_page(PageId* page_id, Page*& page) {
     // 1.   获得一个可用的frame，若无法获得则返回nullptr
     // 2.   在fd对应的文件分配一个新的page_id
     // 3.   将frame的数据写回磁盘

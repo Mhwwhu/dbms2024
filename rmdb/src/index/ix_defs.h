@@ -12,8 +12,9 @@ See the Mulan PSL v2 for more details. */
 
 #include <vector>
 
-#include "defs.h"
+#include "record/rm_defs.h"
 #include "storage/buffer_pool_manager.h"
+#include "common/type/attr_type.h"
 
 // constexpr int IX_NO_PAGE = -1;         // 表示无效页面号
 // constexpr int IX_FILE_HDR_PAGE = 0;     // 文件头所在的页号

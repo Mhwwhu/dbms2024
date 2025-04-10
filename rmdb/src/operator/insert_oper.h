@@ -24,6 +24,7 @@ public:
     bool has_tuple() const override { return false; }
 
 private:
+    // 这里向record中加入了bitmap，但目前实际存储中并不保存bitmap。
     RC make_record(std::shared_ptr<ITuple> tuple, std::shared_ptr<RmRecord>& record);
 
 private:

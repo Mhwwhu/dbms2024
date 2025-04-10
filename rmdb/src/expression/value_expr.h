@@ -4,7 +4,7 @@
 
 class ValueExpr : public Expression {
 public:
-    ValueExpr(const Value& val) {}
+    ValueExpr(const Value& val): val_(val) {}
     ~ValueExpr() override = default;
 
     bool equal(const Expression& other) const override

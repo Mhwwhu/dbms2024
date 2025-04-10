@@ -118,7 +118,6 @@ public:
 	 */
 	int    get_int() const;
 	float  get_float() const;
-	int    get_date() const;
 	std::string get_string() const;
 	bool   get_boolean() const;
 
