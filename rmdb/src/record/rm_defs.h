@@ -10,7 +10,6 @@ See the Mulan PSL v2 for more details. */
 
 #pragma once
 
-#include "defs.h"
 #include "storage/buffer_pool_manager.h"
 
 constexpr int RM_NO_PAGE = -1;
@@ -33,10 +32,24 @@ struct RmPageHdr {
     int num_records;        // 当前页面中当前已经存储的记录个数（初始化为0）
 };
 
+
+struct Rid {
+    int page_no;
+    int slot_no;
+
+    friend bool operator==(const Rid &x, const Rid &y) {
+        return x.page_no == y.page_no && x.slot_no == y.slot_no;
+    }
+
+    friend bool operator!=(const Rid &x, const Rid &y) { return !(x == y); }
+};
+
+
 /* 表中的记录 */
 struct RmRecord {
     char* data;  // 记录的数据
     int size;    // 记录的大小
+    Rid rid;
     bool allocated_ = false;    // 是否已经为数据分配空间
 
     RmRecord() = default;

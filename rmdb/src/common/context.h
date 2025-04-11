@@ -10,9 +10,6 @@ See the Mulan PSL v2 for more details. */
 
 #pragma once
 
-#include "transaction/transaction.h"
-#include "transaction/concurrency/lock_manager.h"
-#include "recovery/log_manager.h"
 #include "parser/ast.h"
 #include "analyze/stmt/stmt.h"
 #include "plan/plan.h"
@@ -25,6 +22,10 @@ See the Mulan PSL v2 for more details. */
 static int const_offset = -1;
 
 class SmManager;
+class LockManager;
+class LogManager;
+class TransactionManager;
+class Transaction;
 
 class Context {
 public:
@@ -48,8 +49,8 @@ public:
     };
 
     Context (LockManager *lock_mgr, LogManager *log_mgr, 
-            Transaction *txn, SmManager* sm_manager, char *data_send = nullptr, int *offset = &const_offset)
-        : lock_mgr_(lock_mgr), log_mgr_(log_mgr), txn_(txn), sm_manager_(sm_manager),
+            Transaction *txn, SmManager* sm_manager, TransactionManager* txn_mgr, char *data_send = nullptr, int *offset = &const_offset)
+        : lock_mgr_(lock_mgr), log_mgr_(log_mgr), txn_(txn), sm_manager_(sm_manager), txn_manager_(txn_mgr),
           data_send_(data_send), offset_(offset) {
             ellipsis_ = false;
           }
@@ -59,6 +60,7 @@ public:
     LogManager *log_mgr_;
     Transaction *txn_;
     SmManager* sm_manager_;
+    TransactionManager* txn_manager_;
     char *data_send_;
     int *offset_;
     bool ellipsis_;

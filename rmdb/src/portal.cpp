@@ -3,7 +3,7 @@
 
 RC Portal::handle_request(Context* context)
 {
-    // TODO: 检查context中的oper是否为空，如果为空则代表不是DML语句，此时应构造CommandExecutor来执行DDL或者其他CMD
+    // 检查context中的oper是否为空，如果为空则代表不是DML语句，此时应构造CommandExecutor来执行DDL或者其他CMD
     RC rc = RC::SUCCESS;
     auto oper = context->oper;
 

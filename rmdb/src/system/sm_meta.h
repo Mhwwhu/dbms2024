@@ -20,6 +20,7 @@ See the Mulan PSL v2 for more details. */
 #include "sm_defs.h"
 #include "common/rc.h"
 #include "deps/jsoncpp/json/json.h"
+#include "common/type/attr_type.h"
 
 static const Json::StaticString FIELD_COL_NAME("name");
 static const Json::StaticString FIELD_COL_TYPE("type");
@@ -92,7 +93,7 @@ struct ColMeta {
         if (!nullable_value.isBool()) {
             return RC::JSON_PARSE_FAILED;
         }
-        AttrType type = attr_type_from_string(type_value.asCString());
+        type = attr_type_from_string(type_value.asCString());
         if (AttrType::UNDEFINED == type) {
             return RC::INTERNAL;
         }
@@ -202,12 +203,13 @@ struct TabMeta {
     // }
 
     /* 根据字段名称获取字段元数据 */
-    std::vector<ColMeta>::iterator get_col(const std::string &col_name) {
+    RC get_col(const std::string &col_name, ColMeta& col) {
         auto pos = std::find_if(cols.begin(), cols.end(), [&](const ColMeta &col) { return col.name == col_name; });
         if (pos == cols.end()) {
-            throw ColumnNotFoundError(col_name);
+            return RC::SCHEMA_FIELD_NOT_EXIST;
         }
-        return pos;
+        col = *pos;
+        return RC::SUCCESS;
     }
 
     Json::Value to_json() {
@@ -282,13 +284,14 @@ class DbMeta {
     }
 
     /* 获取指定名称表的元数据 */
-    TabMeta &get_table(const std::string &tab_name) {
+    RC get_table(const std::string &tab_name, TabMeta& tab_meta) {
         auto pos = tabs_.find(tab_name);
         if (pos == tabs_.end()) {
-            throw TableNotFoundError(tab_name);
+            return RC::SCHEMA_TABLE_NOT_EXIST;
         }
 
-        return pos->second;
+        tab_meta = pos->second;
+        return RC::SUCCESS;
     }
 
     Json::Value to_json()
@@ -330,12 +333,13 @@ class DbMeta {
     RC serialize(std::ostream& os)
     {
         Json::StreamWriterBuilder builder;
-        Json::StreamWriter* writer = builder.newStreamWriter();
 
         std::streampos old_pos = os.tellp();
-        writer->write(to_json(), &os);
+        auto jsonString = Json::writeString(builder, to_json());
+        os << jsonString << std::endl;
+        std::streampos new_pos = os.tellp();
+        if(new_pos - old_pos <= 0) return RC::IOERR_WRITE;
 
-        delete writer;
         return RC::SUCCESS;
     }
 

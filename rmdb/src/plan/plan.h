@@ -20,29 +20,8 @@ See the Mulan PSL v2 for more details. */
 #include "parser/parser.h"
 
 typedef enum PlanTag{
-    T_Invalid = 1,
-    T_Help,
-    T_ShowTable,
-    T_DescTable,
-    T_CreateTable,
-    T_DropTable,
-    T_CreateIndex,
-    T_DropIndex,
-    T_SetKnob,
-    T_Insert,
-    T_Update,
-    T_Delete,
-    T_select,
-    T_Transaction_begin,
-    T_Transaction_commit,
-    T_Transaction_abort,
-    T_Transaction_rollback,
-    T_SeqScan,
-    T_IndexScan,
-    T_NestLoop,
-    T_SortMerge,    // sort merge join
-    T_Sort,
-    T_Projection
+   INSERT_PLAN,
+   PROJECT_PLAN,
 } PlanTag;
 
 // 查询执行计划
@@ -51,7 +30,7 @@ class Plan
 public:
     virtual ~Plan() = default;
 
-    virtual PlanTag type() = 0;
+    virtual PlanTag type() const = 0;
 
     void add_child(std::shared_ptr<Plan> child) { children_.push_back(child); }
 

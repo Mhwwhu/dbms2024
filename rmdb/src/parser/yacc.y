@@ -1,6 +1,9 @@
 %{
 #include "ast.h"
 #include "yacc.tab.h"
+#include "expression/expression.h"
+#include "expression/value_expr.h"
+#include "expression/field_expr.h"
 #include <iostream>
 #include <memory>
 
@@ -33,16 +36,18 @@ WHERE UPDATE SET SELECT INT CHAR FLOAT INDEX AND JOIN EXIT HELP TXN_BEGIN TXN_CO
 %token <sv_bool> VALUE_BOOL
 
 // specify types for non-terminal symbol
-%type <sv_node> stmt dbStmt ddl dml txnStmt setStmt
+%type <sv_node> stmt dbStmt ddl dml txnStmt setStmt insert
 %type <sv_field> field
 %type <sv_fields> fieldList
 %type <sv_type_len> type
 %type <sv_comp_op> op
 %type <sv_expr> expr
+%type <sv_exprs> exprList
+%type <sv_expr_chunk> insertList
 %type <sv_val> value
 %type <sv_vals> valueList
 %type <sv_str> tbName colName
-%type <sv_strs> tableList colNameList
+%type <sv_strs> tableList colNameList optColumnClause
 %type <sv_col> col
 %type <sv_cols> colList selector
 %type <sv_set_clause> setClause
@@ -50,7 +55,6 @@ WHERE UPDATE SET SELECT INT CHAR FLOAT INDEX AND JOIN EXIT HELP TXN_BEGIN TXN_CO
 %type <sv_cond> condition
 %type <sv_conds> whereClause optWhereClause
 %type <sv_orderby>  order_clause opt_order_clause
-%type <sv_orderby_dir> opt_asc_desc
 %type <sv_setKnobType> set_knob_type
 
 %%
@@ -82,7 +86,7 @@ stmt:
     |   ddl
     |   dml
     |   txnStmt
-    |   setStmt
+    /* |   setStmt */
     ;
 
 txnStmt:
@@ -111,12 +115,12 @@ dbStmt:
     }
     ;
 
-setStmt:
+/* setStmt:
         SET set_knob_type '=' VALUE_BOOL
     {
         $$ = std::make_shared<SetNode>($2, $4);
     }
-    ;
+    ; */
 
 ddl:
         CREATE TABLE tbName '(' fieldList ')'
@@ -131,18 +135,18 @@ ddl:
     {
         $$ = std::make_shared<DescTable>($2);
     }
-    |   CREATE INDEX tbName '(' colNameList ')'
+    /* |   CREATE INDEX tbName '(' colNameList ')'
     {
         $$ = std::make_shared<CreateIndex>($3, $5);
     }
     |   DROP INDEX tbName '(' colNameList ')'
     {
         $$ = std::make_shared<DropIndex>($3, $5);
-    }
+    } */
     ;
 
 dml:
-        INSERT INTO tbName VALUES '(' valueList ')'
+        /* INSERT INTO tbName VALUES '(' valueList ')'
     {
         $$ = std::make_shared<InsertNode>($3, $6);
     }
@@ -157,8 +161,33 @@ dml:
     |   SELECT selector FROM tableList optWhereClause opt_order_clause
     {
         $$ = std::make_shared<SelectNode>($2, $4, $5, $6);
+    } */
+    insert {
+        $$ = std::move($1);
     }
     ;
+
+insert:
+    INSERT INTO tbName optColumnClause insertList {
+        $$ = std::make_shared<InsertNode>($3, $4, $5);
+    }
+
+optColumnClause:
+    { $$ = std::vector<std::string>(); }
+    |'(' colNameList ')' {
+        $$ = std::vector<std::string>();
+        std::move($2.begin(), $2.end(), std::back_inserter($$));
+    }
+
+insertList: 
+    VALUES '(' exprList ')'  {
+        $$ = std::vector<std::vector<std::shared_ptr<Expression>>>();
+        $$.push_back(std::move($3));
+    } | insertList ',' '(' exprList ')' {
+        $$ = std::vector<std::vector<std::shared_ptr<Expression>>>();
+        std::move($1.begin(), $1.end(), std::back_inserter($$));
+        $$.push_back(std::move($4));
+    }
 
 fieldList:
         field
@@ -218,38 +247,38 @@ valueList:
 value:
         VALUE_INT
     {
-        $$ = std::make_shared<IntLit>($1);
+        $$ = std::make_shared<Value>($1);
     }
     |   VALUE_FLOAT
     {
-        $$ = std::make_shared<FloatLit>($1);
+        $$ = std::make_shared<Value>($1);
     }
     |   VALUE_STRING
     {
-        $$ = std::make_shared<StringLit>($1);
+        $$ = std::make_shared<Value>($1.c_str());
     }
     |   VALUE_BOOL
     {
-        $$ = std::make_shared<BoolLit>($1);
+        $$ = std::make_shared<Value>($1);
     }
     ;
 
-condition:
+/* condition:
         col op expr
     {
         $$ = std::make_shared<BinaryExpr>($1, $2, $3);
     }
-    ;
+    ; */
 
-optWhereClause:
-        /* epsilon */ { /* ignore*/ }
+/* optWhereClause:
+         {  }
     |   WHERE whereClause
     {
         $$ = $2;
     }
-    ;
+    ; */
 
-whereClause:
+/* whereClause:
         condition 
     {
         $$ = std::vector<std::shared_ptr<BinaryExpr>>{$1};
@@ -258,7 +287,7 @@ whereClause:
     {
         $$.push_back($3);
     }
-    ;
+    ; */
 
 col:
         tbName '.' colName
@@ -283,42 +312,30 @@ colList:
     ;
 
 op:
-        '='
-    {
-        $$ = SV_OP_EQ;
-    }
-    |   '<'
-    {
-        $$ = SV_OP_LT;
-    }
-    |   '>'
-    {
-        $$ = SV_OP_GT;
-    }
-    |   NEQ
-    {
-        $$ = SV_OP_NE;
-    }
-    |   LEQ
-    {
-        $$ = SV_OP_LE;
-    }
-    |   GEQ
-    {
-        $$ = SV_OP_GE;
-    }
+    '=' { $$ = EQ; }
+    | '<' { $$ = LT; }
+    | '>' { $$ = GT; }
+    | NEQ { $$ = NE; }
+    | LEQ { $$ = LE; }
+    | GEQ { $$ = GE; }
     ;
 
+exprList:
+    expr {
+        $$ = std::vector<std::shared_ptr<Expression>>();
+        $$.push_back(std::move($1));
+    } | exprList ',' expr {
+        $$ = std::vector<std::shared_ptr<Expression>>();
+        std::move($1.begin(), $1.end(), std::back_inserter($$));
+        $$.push_back(std::move($3));
+    }
+
 expr:
-        value
-    {
-        $$ = std::static_pointer_cast<Expr>($1);
+    value {
+        $$ = std::make_shared<ValueExpr>(*$1);
     }
-    |   col
-    {
-        $$ = std::static_pointer_cast<Expr>($1);
-    }
-    ;
+
+
 
 setClauses:
         setClause
@@ -338,15 +355,15 @@ setClause:
     }
     ;
 
-selector:
+/* selector:
         '*'
     {
         $$ = {};
     }
     |   colList
-    ;
+    ; */
 
-tableList:
+/* tableList:
         tbName
     {
         $$ = std::vector<std::string>{$1};
@@ -359,14 +376,14 @@ tableList:
     {
         $$.push_back($3);
     }
-    ;
+    ; */
 
-opt_order_clause:
+/* opt_order_clause:
     ORDER BY order_clause      
     { 
         $$ = $3; 
     }
-    |   /* epsilon */ { /* ignore*/ }
+    |   { }
     ;
 
 order_clause:
@@ -380,7 +397,7 @@ opt_asc_desc:
     ASC          { $$ = OrderBy_ASC;     }
     |  DESC      { $$ = OrderBy_DESC;    }
     |       { $$ = OrderBy_DEFAULT; }
-    ;    
+    ;     */
 
 set_knob_type:
     ENABLE_NESTLOOP { $$ = EnableNestLoop; }

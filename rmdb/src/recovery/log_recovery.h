@@ -15,6 +15,7 @@ See the Mulan PSL v2 for more details. */
 #include "log_manager.h"
 #include "storage/disk_manager.h"
 #include "system/sm_manager.h"
+#include "common/rc.h"
 
 class RedoLogsInPage {
 public:
@@ -31,9 +32,9 @@ public:
         sm_manager_ = sm_manager;
     }
 
-    void analyze();
-    void redo();
-    void undo();
+    RC analyze();
+    RC redo();
+    RC undo();
 private:
     LogBuffer buffer_;                                              // 读入日志
     DiskManager* disk_manager_;                                     // 用来读写文件

@@ -11,18 +11,19 @@ See the Mulan PSL v2 for more details. */
 #pragma once
 
 #include "rm_defs.h"
+#include <memory>
 
 class RmFileHandle;
 
-class RmScan : public RecScan {
+class RecScan {
     const RmFileHandle *file_handle_;
-    Rid rid_;
+    std::shared_ptr<RmRecord> record_;
 public:
-    RmScan(const RmFileHandle *file_handle);
+    RecScan(const RmFileHandle *file_handle);
 
-    void next() override;
+    RC open();
 
-    bool is_end() const override;
+    RC next();
 
-    Rid rid() const override;
+    std::shared_ptr<RmRecord> record() const;
 };

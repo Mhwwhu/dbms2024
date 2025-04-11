@@ -13,7 +13,6 @@ See the Mulan PSL v2 for more details. */
 #include <atomic>
 
 #include "common/config.h"
-#include "defs.h"
 #include "record/rm_defs.h"
 
 /* 标识事务状态 */

@@ -14,21 +14,9 @@ See the Mulan PSL v2 for more details. */
 #include <memory>
 
 #include "common/type/attr_type.h"
+#include "expression/expression.h"
 
-enum JoinType {
-    INNER_JOIN, LEFT_JOIN, RIGHT_JOIN, FULL_JOIN
-};
 namespace ast {
-
-enum SvCompOp {
-    SV_OP_EQ, SV_OP_NE, SV_OP_LT, SV_OP_GT, SV_OP_LE, SV_OP_GE
-};
-
-enum OrderByDir {
-    OrderBy_DEFAULT,
-    OrderBy_ASC,
-    OrderBy_DESC
-};
 
 enum SetKnobType {
     EnableNestLoop, EnableSortMerge
@@ -108,37 +96,7 @@ struct DropIndex : public TreeNode {
             tab_name(std::move(tab_name_)), col_names(std::move(col_names_)) {}
 };
 
-struct Expr : public TreeNode {
-};
-
-struct Value : public Expr {
-};
-
-struct IntLit : public Value {
-    int val;
-
-    IntLit(int val_) : val(val_) {}
-};
-
-struct FloatLit : public Value {
-    float val;
-
-    FloatLit(float val_) : val(val_) {}
-};
-
-struct StringLit : public Value {
-    std::string val;
-
-    StringLit(std::string val_) : val(std::move(val_)) {}
-};
-
-struct BoolLit : public Value {
-    bool val;
-
-    BoolLit(bool val_) : val(val_) {}
-};
-
-struct Col : public Expr {
+struct Col : public TreeNode {
     std::string tab_name;
     std::string col_name;
 
@@ -154,90 +112,110 @@ struct SetClause : public TreeNode {
             col_name(std::move(col_name_)), val(std::move(val_)) {}
 };
 
-struct BinaryExpr : public TreeNode {
-    std::shared_ptr<Col> lhs;
-    SvCompOp op;
-    std::shared_ptr<Expr> rhs;
-
-    BinaryExpr(std::shared_ptr<Col> lhs_, SvCompOp op_, std::shared_ptr<Expr> rhs_) :
-            lhs(std::move(lhs_)), op(op_), rhs(std::move(rhs_)) {}
+struct ConditionNode : public TreeNode {
+    virtual ~ConditionNode() = default;
 };
 
-struct OrderBy : public TreeNode
+struct CompareNode : public ConditionNode {
+    enum CompOp {
+        EQ, NE, LT, GT, LE, GE
+    };
+
+    std::shared_ptr<Expression> left;
+    std::shared_ptr<Expression> right;
+    CompOp comp;
+
+    CompareNode(std::shared_ptr<Expression> left_, std::shared_ptr<Expression> right_, CompOp comp_)
+    : left(left_), right(right_), comp(comp_) {}
+};
+
+struct ConjunctionNode : public TreeNode {
+    enum ConjunctionType {
+        AND, OR, NONE
+    };
+
+    std::shared_ptr<ConjunctionNode> left;
+    std::shared_ptr<ConjunctionNode> right;
+    std::shared_ptr<ConditionNode> condition;
+    ConjunctionType type;
+
+    ConjunctionNode(std::shared_ptr<ConditionNode> condition_)
+    : condition(condition), type(ConjunctionType::NONE) {}
+
+    ConjunctionNode(std::shared_ptr<ConjunctionNode> left_, std::shared_ptr<ConjunctionNode> right_, ConjunctionType type_)
+    : left(left_), right(right_), type(type_) {}
+};
+
+struct OrderByNode : public TreeNode
 {
-    std::shared_ptr<Col> cols;
-    OrderByDir orderby_dir;
-    OrderBy( std::shared_ptr<Col> cols_, OrderByDir orderby_dir_) :
-       cols(std::move(cols_)), orderby_dir(std::move(orderby_dir_)) {}
+    enum OrderByDir {
+        OrderBy_DEFAULT,
+        OrderBy_ASC,
+        OrderBy_DESC
+    };
+
+    std::vector<std::pair<std::shared_ptr<Expression>, OrderByDir>> units;
+    OrderByNode(std::vector<std::pair<std::shared_ptr<Expression>, OrderByDir>> units_) :
+       units(std::move(units_)) {}
 };
 
 struct InsertNode : public TreeNode {
     std::string tab_name;
-    std::vector<std::shared_ptr<Value>> vals;
+    std::vector<std::string> decl_cols;
+    std::vector<std::vector<std::shared_ptr<Expression>>> exprs;
 
-    InsertNode(std::string tab_name_, std::vector<std::shared_ptr<Value>> vals_) :
-            tab_name(std::move(tab_name_)), vals(std::move(vals_)) {}
+    InsertNode(const std::string& tab_name_, const std::vector<std::string>& decl_cols_,
+        const std::vector<std::vector<std::shared_ptr<Expression>>>& exprs_) :
+            tab_name(std::move(tab_name_)), decl_cols(decl_cols_), exprs(std::move(exprs_)) {}
 };
 
-struct DeleteNode : public TreeNode {
-    std::string tab_name;
-    std::vector<std::shared_ptr<BinaryExpr>> conds;
+struct JoinNode : public TreeNode {
+    enum JoinType {
+        INNER_JOIN, LEFT_JOIN, RIGHT_JOIN, FULL_JOIN, NONE
+    };
 
-    DeleteNode(std::string tab_name_, std::vector<std::shared_ptr<BinaryExpr>> conds_) :
-            tab_name(std::move(tab_name_)), conds(std::move(conds_)) {}
-};
-
-struct UpdateNode : public TreeNode {
-    std::string tab_name;
-    std::vector<std::shared_ptr<SetClause>> set_clauses;
-    std::vector<std::shared_ptr<BinaryExpr>> conds;
-
-    UpdateNode(std::string tab_name_,
-               std::vector<std::shared_ptr<SetClause>> set_clauses_,
-               std::vector<std::shared_ptr<BinaryExpr>> conds_) :
-            tab_name(std::move(tab_name_)), set_clauses(std::move(set_clauses_)), conds(std::move(conds_)) {}
-};
-
-struct JoinExpr : public TreeNode {
-    std::string left;
-    std::string right;
-    std::vector<std::shared_ptr<BinaryExpr>> conds;
+    std::shared_ptr<JoinNode> left;
+    std::shared_ptr<JoinNode> right;
+    std::shared_ptr<ConjunctionNode> conjunction;
+    std::string table_name;
     JoinType type;
 
-    JoinExpr(std::string left_, std::string right_,
-               std::vector<std::shared_ptr<BinaryExpr>> conds_, JoinType type_) :
-            left(std::move(left_)), right(std::move(right_)), conds(std::move(conds_)), type(type_) {}
+    JoinNode(std::shared_ptr<JoinNode> left_, std::shared_ptr<JoinNode> right_,
+            std::shared_ptr<ConjunctionNode> conjunction_, JoinType type_) :
+            left(left_), right(right_), conjunction(conjunction_), type(type_) {}
+
+    JoinNode(std::string table_name_) : table_name(table_name_), type(JoinType::NONE) {}
 };
 
-struct SelectNode : public TreeNode {
-    std::vector<std::shared_ptr<Col>> cols;
-    std::vector<std::string> tabs;
-    std::vector<std::shared_ptr<BinaryExpr>> conds;
-    std::vector<std::shared_ptr<JoinExpr>> jointree;
+// struct SelectNode : public TreeNode {
+//     std::vector<std::shared_ptr<Col>> cols;
+//     std::vector<std::string> tabs;
+//     std::vector<std::shared_ptr<BinaryExpr>> conds;
+//     std::vector<std::shared_ptr<JoinExpr>> jointree;
 
     
-    bool has_sort;
-    std::shared_ptr<OrderBy> order;
+//     bool has_sort;
+//     std::shared_ptr<OrderBy> order;
 
 
-    SelectNode(std::vector<std::shared_ptr<Col>> cols_,
-               std::vector<std::string> tabs_,
-               std::vector<std::shared_ptr<BinaryExpr>> conds_,
-               std::shared_ptr<OrderBy> order_) :
-            cols(std::move(cols_)), tabs(std::move(tabs_)), conds(std::move(conds_)), 
-            order(std::move(order_)) {
-                has_sort = (bool)order;
-            }
-};
+//     SelectNode(std::vector<std::shared_ptr<Col>> cols_,
+//                std::vector<std::string> tabs_,
+//                std::vector<std::shared_ptr<BinaryExpr>> conds_,
+//                std::shared_ptr<OrderBy> order_) :
+//             cols(std::move(cols_)), tabs(std::move(tabs_)), conds(std::move(conds_)), 
+//             order(std::move(order_)) {
+//                 has_sort = (bool)order;
+//             }
+// };
 
-// set enable_nestloop
-struct SetNode : public TreeNode {
-    SetKnobType set_knob_type_;
-    bool bool_val_;
+// // set enable_nestloop
+// struct SetNode : public TreeNode {
+//     SetKnobType set_knob_type_;
+//     bool bool_val_;
 
-    SetNode(SetKnobType &type, bool bool_value) : 
-        set_knob_type_(type), bool_val_(bool_value) { }
-};
+//     SetNode(SetKnobType &type, bool bool_value) : 
+//         set_knob_type_(type), bool_val_(bool_value) { }
+// };
 
 // Semantic value
 struct SemValue {
@@ -245,19 +223,20 @@ struct SemValue {
     float sv_float;
     std::string sv_str;
     bool sv_bool;
-    OrderByDir sv_orderby_dir;
     std::vector<std::string> sv_strs;
 
-    std::shared_ptr<TreeNode> sv_node;
+    CompareNode::CompOp sv_comp_op;
 
-    SvCompOp sv_comp_op;
+    std::shared_ptr<TreeNode> sv_node;
 
     std::shared_ptr<TypeLen> sv_type_len;
 
     std::shared_ptr<Field> sv_field;
     std::vector<std::shared_ptr<Field>> sv_fields;
 
-    std::shared_ptr<Expr> sv_expr;
+    std::shared_ptr<Expression> sv_expr;
+    std::vector<std::shared_ptr<Expression>> sv_exprs;
+    std::vector<std::vector<std::shared_ptr<Expression>>> sv_expr_chunk;
 
     std::shared_ptr<Value> sv_val;
     std::vector<std::shared_ptr<Value>> sv_vals;
@@ -268,10 +247,16 @@ struct SemValue {
     std::shared_ptr<SetClause> sv_set_clause;
     std::vector<std::shared_ptr<SetClause>> sv_set_clauses;
 
-    std::shared_ptr<BinaryExpr> sv_cond;
-    std::vector<std::shared_ptr<BinaryExpr>> sv_conds;
+    std::shared_ptr<ConjunctionNode> sv_conjunction;
+    std::vector<std::shared_ptr<ConjunctionNode>> sv_conjunctions;
 
-    std::shared_ptr<OrderBy> sv_orderby;
+    std::shared_ptr<ConditionNode> sv_cond;
+    std::vector<std::shared_ptr<ConditionNode>> sv_conds;
+
+    std::shared_ptr<CompareNode> sv_compare;
+    std::vector<std::shared_ptr<CompareNode>> sv_compares;
+
+    std::shared_ptr<OrderByNode> sv_orderby;
 
     SetKnobType sv_setKnobType;
 };

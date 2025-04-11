@@ -12,9 +12,9 @@ See the Mulan PSL v2 for more details. */
 
 #include <memory>
 
-
 #include "index/ix.h"
 #include "record_printer.h"
+#include "insert_plan.h"
 
 // 目前的索引匹配规则为：完全匹配索引字段，且全部为单点查询，不会自动调整where条件的顺序
 bool Planner::get_index_cols(std::string tab_name, std::vector<Condition> curr_conds, std::vector<std::string>& index_col_names) {
@@ -394,7 +394,10 @@ std::shared_ptr<Plan> Planner::do_planner(std::shared_ptr<IStmt> stmt, Context *
 
 RC Planner::do_planner(std::shared_ptr<IStmt> stmt, Context* context, std::shared_ptr<Plan>& plan)
 {
-    
+    switch(stmt->type()) {
+    case StmtType::INSERT_STMT:
+        return create_plan(std::static_pointer_cast<InsertStmt>(stmt), plan);
+    }
 
     return RC::INTERNAL;
 }
@@ -402,4 +405,26 @@ RC Planner::do_planner(std::shared_ptr<IStmt> stmt, Context* context, std::share
 RC Planner::create_plan(std::shared_ptr<CreateTableStmt> stmt, std::shared_ptr<Plan>& plan)
 {
     
+}
+
+RC Planner::create_plan(std::shared_ptr<SelectStmt> stmt, std::shared_ptr<Plan>& plan)
+{
+    
+}
+
+RC Planner::create_plan(std::shared_ptr<InsertStmt> stmt, std::shared_ptr<Plan>& plan)
+{
+    RC rc = RC::SUCCESS;
+    if(stmt->use_select()) {
+        plan = std::make_shared<InsertPlan>(stmt->table_meta(), stmt->decl_cols());
+        std::shared_ptr<Plan> select_child;
+        rc = create_plan(stmt->opt_select_stmt(), select_child);
+        if(RM_FAIL(rc)) return rc;
+        plan->add_child(select_child);
+    }
+    else {
+        plan = std::make_shared<InsertPlan>(stmt->table_meta(), stmt->decl_cols(), stmt->opt_insert_rows());
+    }
+
+    return rc;
 }

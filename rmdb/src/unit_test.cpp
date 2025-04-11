@@ -174,7 +174,7 @@ class BigStorageTest : public ::testing::Test {
         disk_manager_->create_file(TEST_FILE_NAME_BIG);
         assert(disk_manager_->is_file(TEST_FILE_NAME_BIG));
         // 打开测试文件
-        fd_ = disk_manager_->open_file(TEST_FILE_NAME_BIG);
+        disk_manager_->open_file(TEST_FILE_NAME_BIG, fd_);
         assert(fd_ != -1);
     }
 
@@ -262,7 +262,7 @@ class BufferPoolManagerTest : public ::testing::Test {
         disk_manager_->create_file(TEST_FILE_NAME);
         assert(disk_manager_->is_file(TEST_FILE_NAME));
         // 打开测试文件
-        fd_ = disk_manager_->open_file(TEST_FILE_NAME);
+        disk_manager_->open_file(TEST_FILE_NAME, fd_);
         assert(fd_ != -1);
     }
 
@@ -361,7 +361,7 @@ class BufferPoolManagerConcurrencyTest : public ::testing::Test {
         disk_manager_->create_file(TEST_FILE_NAME_CCUR);
         assert(disk_manager_->is_file(TEST_FILE_NAME_CCUR));
         // 打开测试文件
-        fd_ = disk_manager_->open_file(TEST_FILE_NAME_CCUR);
+        disk_manager_->open_file(TEST_FILE_NAME_CCUR, fd_);
         assert(fd_ != -1);
     }
 
@@ -440,7 +440,8 @@ TEST(StorageTest, SimpleTest) {
         }
         // open without create
         try {
-            disk_manager->open_file(filename);
+            int fd;
+            disk_manager->open_file(filename, fd);
             assert(false);
         } catch (const FileNotFoundError &e) {
         }
@@ -454,7 +455,8 @@ TEST(StorageTest, SimpleTest) {
         }
 
         // open file
-        int fd = disk_manager->open_file(filename);
+        int fd;
+        disk_manager->open_file(filename, fd);
         char *tmp = new char[PAGE_SIZE * MAX_PAGES];  // TODO: fix error in detected memory leaks
 
         mock[fd] = tmp;
@@ -535,7 +537,8 @@ TEST(StorageTest, SimpleTest) {
             char *buf = mock[fd];
             fd2name.erase(fd);
             mock.erase(fd);
-            int new_fd = disk_manager->open_file(filename);
+            int new_fd;
+            disk_manager->open_file(filename, new_fd);
             mock[new_fd] = buf;
             fd2name[new_fd] = filename;
         }

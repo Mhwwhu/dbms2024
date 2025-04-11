@@ -18,8 +18,16 @@ static constexpr unsigned BITMAP_HIGHEST_BIT = 0x80u;  // 128 (2^7)
 
 class Bitmap {
    public:
-    // 从地址bm开始的size个字节全部置0
-    static void init(char *bm, int size) { memset(bm, 0, size); }
+    // 从地址bm开始的size个字节全部置为init_bit
+    static void init(char *bm, int size, bool init_bit) 
+    {
+        if(init_bit) {
+            memset(bm, 0xff, size);
+        }
+        else {
+            memset(bm, 0, size); 
+        }
+    }
 
     // pos位 置1
     static void set(char *bm, int pos) { bm[get_bucket(pos)] |= get_bit(pos); }

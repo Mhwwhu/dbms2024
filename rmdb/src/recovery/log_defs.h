@@ -10,7 +10,6 @@ See the Mulan PSL v2 for more details. */
 
 #pragma once
 
-#include "defs.h"
 #include "storage/disk_manager.h"
 #include "common/config.h"
 

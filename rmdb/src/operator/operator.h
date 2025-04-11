@@ -10,7 +10,9 @@
 class Context;
 
 enum OperatorType {
-    PROJECT_OPER
+    PROJECT_OPER,
+    INSERT_OPER,
+    CHUNK_GET_OPER,
 };
 
 class Operator {
@@ -18,9 +20,9 @@ public:
     Operator() = default;
     virtual ~Operator() = default;
 
-    virtual OperatorType type() = 0;
+    virtual OperatorType type() const = 0;
 
-    virtual RC open() = 0;
+    virtual RC open(Context*) = 0;
 
     virtual RC next() = 0;
 
@@ -33,7 +35,8 @@ public:
     virtual std::shared_ptr<ITuple> current_tuple() const = 0;
 
     virtual RC tuple_schema(TupleSchema& schema) const = 0;
+
+    virtual bool has_tuple() const = 0;
 protected:
     std::vector<std::shared_ptr<Operator>> children_;
-    Context* context_;
 };

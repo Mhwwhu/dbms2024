@@ -16,23 +16,26 @@ See the Mulan PSL v2 for more details. */
 
 #include "bitmap.h"
 #include "rm_defs.h"
+#include "common/rc.h"
+#include "tuple/tuple.h"
 
 class RmManager;
 class Context;
 
 /* 对表数据文件中的页面进行封装 */
 struct RmPageHandle {
-    const RmFileHdr *file_hdr;  // 当前页面所在文件的文件头指针
-    Page *page;                 // 页面的实际数据，包括页面存储的数据、元信息等
-    RmPageHdr *page_hdr;        // page->data的第一部分，存储页面元信息，指针指向首地址，长度为sizeof(RmPageHdr)
-    char *bitmap;               // page->data的第二部分，存储页面的bitmap，指针指向首地址，长度为file_hdr->bitmap_size
-    char *slots;                // page->data的第三部分，存储表的记录，指针指向首地址，每个slot的长度为file_hdr->record_size
+    const RmFileHdr *file_hdr = nullptr;  // 当前页面所在文件的文件头指针
+    Page *page = nullptr;                 // 页面的实际数据，包括页面存储的数据、元信息等
+    RmPageHdr *page_hdr = nullptr;        // page->data的第一部分，存储页面元信息，指针指向首地址，长度为sizeof(RmPageHdr)
+    char *bitmap = nullptr;               // page->data的第二部分，存储页面的bitmap，指针指向首地址，长度为file_hdr->bitmap_size
+    char *slots = nullptr;                // page->data的第三部分，存储表的记录，指针指向首地址，每个slot的长度为file_hdr->record_size
 
     RmPageHandle(const RmFileHdr *fhdr_, Page *page_) : file_hdr(fhdr_), page(page_) {
         page_hdr = reinterpret_cast<RmPageHdr *>(page->get_data() + page->OFFSET_PAGE_HDR);
         bitmap = page->get_data() + sizeof(RmPageHdr) + page->OFFSET_PAGE_HDR;
         slots = bitmap + file_hdr->bitmap_size;
     }
+    RmPageHandle() = default;
 
     // 返回指定slot_no的slot存储收地址
     char* get_slot(int slot_no) const {
@@ -42,16 +45,16 @@ struct RmPageHandle {
 
 /* 每个RmFileHandle对应一个表的数据文件，里面有多个page，每个page的数据封装在RmPageHandle中 */
 class RmFileHandle {      
-    friend class RmScan;    
+    friend class RecScan;    
     friend class RmManager;
 
-   private:
+private:
     DiskManager *disk_manager_;
     BufferPoolManager *buffer_pool_manager_;
     int fd_;        // 打开文件后产生的文件句柄
     RmFileHdr file_hdr_;    // 文件头，维护当前表文件的元数据
 
-   public:
+public:
     RmFileHandle(DiskManager *disk_manager, BufferPoolManager *buffer_pool_manager, int fd)
         : disk_manager_(disk_manager), buffer_pool_manager_(buffer_pool_manager), fd_(fd) {
         // 注意：这里从磁盘中读出文件描述符为fd的文件的file_hdr，读到内存中
@@ -67,26 +70,27 @@ class RmFileHandle {
 
     /* 判断指定位置上是否已经存在一条记录，通过Bitmap来判断 */
     bool is_record(const Rid &rid) const {
-        RmPageHandle page_handle = fetch_page_handle(rid.page_no);
+        RmPageHandle page_handle(&file_hdr_, nullptr);
+        RC rc = fetch_page_handle(rid.page_no, page_handle);
+        if(RM_FAIL(rc)) return false;
         return Bitmap::is_set(page_handle.bitmap, rid.slot_no);  // page的slot_no位置上是否有record
     }
 
-    std::unique_ptr<RmRecord> get_record(const Rid &rid, Context *context) const;
+    RC get_record(const Rid &rid, Context *context, std::shared_ptr<RmRecord>& record) const;
 
-    Rid insert_record(char *buf, Context *context);
+    RC insert_record(char *buf, Rid& rid, Context *context);
 
-    void insert_record(const Rid &rid, char *buf);
+    RC insert_record(const Rid &rid, char *buf);
 
-    void delete_record(const Rid &rid, Context *context);
+    RC delete_record(const Rid &rid, Context *context);
 
-    void update_record(const Rid &rid, char *buf, Context *context);
+    RC update_record(const Rid &rid, char *buf, Context *context);
 
-    RmPageHandle create_new_page_handle();
+    RC create_new_page_handle(RmPageHandle& handle);
 
-    RmPageHandle fetch_page_handle(int page_no) const;
+    RC fetch_page_handle(page_id_t page_no, RmPageHandle& handle) const;
 
-   private:
-    RmPageHandle create_page_handle();
+private:
+    RC fetch_free_page_handle(RmPageHandle& handle);
 
-    void release_page_handle(RmPageHandle &page_handle);
 };

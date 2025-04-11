@@ -1,8 +1,6 @@
 #pragma once
 
 #include "common/rc.h"
-#include "system/sm_manager.h"
-#include "parser/ast.h"
 
 enum StmtType {
     SELECT_STMT,

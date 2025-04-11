@@ -15,33 +15,28 @@ See the Mulan PSL v2 for more details. */
  * @brief 初始化file_handle和rid
  * @param file_handle
  */
-RmScan::RmScan(const RmFileHandle *file_handle) : file_handle_(file_handle) {
+RecScan::RecScan(const RmFileHandle *file_handle) : file_handle_(file_handle) {
     // Todo:
     // 初始化file_handle和rid（指向第一个存放了记录的位置）
+
+}
+
+RC RecScan::open() {
 
 }
 
 /**
  * @brief 找到文件中下一个存放了记录的位置
  */
-void RmScan::next() {
+RC RecScan::next() {
     // Todo:
     // 找到文件中下一个存放了记录的非空闲位置，用rid_来指向这个位置
 
 }
 
 /**
- * @brief ​ 判断是否到达文件末尾
- */
-bool RmScan::is_end() const {
-    // Todo: 修改返回值
-
-    return false;
-}
-
-/**
  * @brief RmScan内部存放的rid
  */
-Rid RmScan::rid() const {
-    return rid_;
+std::shared_ptr<RmRecord> RecScan::record() const {
+    return nullptr;
 }

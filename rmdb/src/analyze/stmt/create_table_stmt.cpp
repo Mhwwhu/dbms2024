@@ -14,6 +14,11 @@ RC CreateTableStmt::create(SmManager* manager, std::shared_ptr<ast::CreateTable>
     if(table_name == "") return RC::SCHEMA_TABLE_NAME_MISSING;
     if(field_defs.size() == 0) return RC::SCHEMA_FIELD_MISSING;
 
+    // 检查table是否已存在
+    if(manager->fhs_.find(table_name) != manager->fhs_.end()) {
+        return RC::SCHEMA_TABLE_EXIST;
+    }
+
     stmt = make_shared<CreateTableStmt>(table_name, field_defs);
 
     return rc;
