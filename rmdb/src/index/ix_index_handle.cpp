@@ -740,12 +740,12 @@ bool IxIndexHandle::coalesce(IxNodeHandle **neighbor_node, IxNodeHandle **node, 
  * @note iid和rid存的不是一个东西，rid是上层传过来的记录位置，iid是索引内部生成的索引槽位置
  */
 Rid IxIndexHandle::get_rid(const Iid &iid) const {
-    // IxNodeHandle *node = fetch_node(iid.page_no);
-    // if (iid.slot_no >= node->get_size()) {
-    //     throw IndexEntryNotFoundError();
-    // }
-    // buffer_pool_manager_->unpin_page(node->get_page_id(), false);  // unpin it!
-    // return *node->get_rid(iid.slot_no);
+    IxNodeHandle *node = fetch_node(iid.page_no);
+    if (iid.slot_no >= node->get_size()) {
+        throw IndexEntryNotFoundError();
+    }
+    buffer_pool_manager_->unpin_page(node->get_page_id(), false);  // unpin it!
+    return *node->get_rid(iid.slot_no);
 }
 
 /**
@@ -776,7 +776,6 @@ Iid IxIndexHandle::lower_bound(const char *key) {
  * @return Iid
  */
 Iid IxIndexHandle::upper_bound(const char *key) {
-    
     auto [leaf_node, root_is_latched] = find_leaf_page(key, Operation::FIND, nullptr, false);
     if (leaf_node == nullptr) {
         return Iid{-1, -1};
@@ -786,6 +785,7 @@ Iid IxIndexHandle::upper_bound(const char *key) {
     buffer_pool_manager_->unpin_page(leaf_node->get_page_id(), false);
     delete leaf_node;
     return iid;
+
 }
 
 /**
