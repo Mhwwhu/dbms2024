@@ -22,6 +22,8 @@ private:
 
     RC write_result_internal(Context* ctx);
 
+    RC write_tuple_result(Context* ctx);
+
 private:
     int fd_;
     std::unique_ptr<BufferedWriter> writer_;

@@ -1,4 +1,6 @@
-set(SOURCES field_expr.cpp)
+set(SOURCES field_expr.cpp
+            conjunction_expr.cpp
+            comparison_expr.cpp)
 
 add_library(expression STATIC ${SOURCES})
 

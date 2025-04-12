@@ -15,6 +15,8 @@ public:
         return false;
     }
 
+    std::string name() const override { return field_name_; }
+
 private:
     std::string table_name_;
     std::string field_name_;

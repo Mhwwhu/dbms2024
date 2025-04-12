@@ -13,7 +13,6 @@ See the Mulan PSL v2 for more details. */
 #include <map>
 
 #include "errors.h"
-#include "execution_bak/execution.h"
 #include "parser/parser.h"
 #include "system/sm.h"
 #include "common/context.h"

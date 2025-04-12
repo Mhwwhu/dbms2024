@@ -34,7 +34,7 @@ public:
 
     virtual std::shared_ptr<ITuple> current_tuple() const = 0;
 
-    virtual RC tuple_schema(TupleSchema& schema) const = 0;
+    virtual std::shared_ptr<TupleSchema> tuple_schema() const = 0;
 
     virtual bool has_tuple() const = 0;
 protected:

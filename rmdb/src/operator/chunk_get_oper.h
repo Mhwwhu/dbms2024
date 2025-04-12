@@ -8,7 +8,7 @@
  */
 class ChunkGetOper : public Operator {
 public:
-    ChunkGetOper(const std::vector<std::shared_ptr<ITuple>>& chunk, std::vector<TupleSchema>& tuple_schema)
+    ChunkGetOper(const std::vector<std::shared_ptr<ITuple>>& chunk, std::vector<std::shared_ptr<TupleSchema>>& tuple_schema)
     : chunk_(chunk), tuple_schema_(tuple_schema) {}
 
     OperatorType type() const override { return OperatorType::CHUNK_GET_OPER; }
@@ -25,18 +25,17 @@ public:
         return chunk_[idx_]; 
     }
 
-    RC tuple_schema(TupleSchema& schema) const override 
+    std::shared_ptr<TupleSchema> tuple_schema() const override
     {
-        if(idx_ < 0) return RC::INTERNAL;
-        schema = tuple_schema_[idx_];
-        return RC::SUCCESS;
+        if(idx_ < 0) return nullptr;
+        return tuple_schema_[idx_];
     }
 
     bool has_tuple() const override { return true; }
 
 private:
     std::vector<std::shared_ptr<ITuple>> chunk_;
-    std::vector<TupleSchema> tuple_schema_;
+    std::vector<std::shared_ptr<TupleSchema>> tuple_schema_;
 
     size_t idx_ = -1;
 };

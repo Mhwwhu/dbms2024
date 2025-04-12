@@ -15,19 +15,21 @@ See the Mulan PSL v2 for more details. */
 #include "index/ix.h"
 #include "record_printer.h"
 #include "insert_plan.h"
+#include "project_plan.h"
+
+using namespace std;
 
 // 目前的索引匹配规则为：完全匹配索引字段，且全部为单点查询，不会自动调整where条件的顺序
-bool Planner::get_index_cols(std::string tab_name, std::vector<Condition> curr_conds, std::vector<std::string>& index_col_names) {
-    // index_col_names.clear();
-    // for(auto& cond: curr_conds) {
-    //     if(cond.is_rhs_val && cond.op == OP_EQ && cond.lhs_col.tab_name.compare(tab_name) == 0)
-    //         index_col_names.push_back(cond.lhs_col.col_name);
-    // }
-    // TabMeta& tab = sm_manager_->db_.get_table(tab_name);
-    // if(tab.is_index(index_col_names)) return true;
-    // return false;
-    return false;
-}
+// bool Planner::get_index_cols(std::string tab_name, std::vector<Condition> curr_conds, std::vector<std::string>& index_col_names) {
+//     index_col_names.clear();
+//     for(auto& cond: curr_conds) {
+//         if(cond.is_rhs_val && cond.op == OP_EQ && cond.lhs_col.tab_name.compare(tab_name) == 0)
+//             index_col_names.push_back(cond.lhs_col.col_name);
+//     }
+//     TabMeta& tab = sm_manager_->db_.get_table(tab_name);
+//     if(tab.is_index(index_col_names)) return true;
+//     return false;
+// }
 
 /**
  * @brief 表算子条件谓词生成
@@ -36,67 +38,67 @@ bool Planner::get_index_cols(std::string tab_name, std::vector<Condition> curr_c
  * @param tab_names 表名
  * @return std::vector<Condition>
  */
-std::vector<Condition> pop_conds(std::vector<Condition> &conds, std::string tab_names) {
-    // auto has_tab = [&](const std::string &tab_name) {
-    //     return std::find(tab_names.begin(), tab_names.end(), tab_name) != tab_names.end();
-    // };
-    // std::vector<Condition> solved_conds;
-    // auto it = conds.begin();
-    // while (it != conds.end()) {
-    //     if ((tab_names.compare(it->lhs_col.tab_name) == 0 && it->is_rhs_val) || (it->lhs_col.tab_name.compare(it->rhs_col.tab_name) == 0)) {
-    //         solved_conds.emplace_back(std::move(*it));
-    //         it = conds.erase(it);
-    //     } else {
-    //         it++;
-    //     }
-    // }
-    // return solved_conds;
-    return std::vector<Condition>();
-}
+// std::vector<Condition> pop_conds(std::vector<Condition> &conds, std::string tab_names) {
+//     auto has_tab = [&](const std::string &tab_name) {
+//         return std::find(tab_names.begin(), tab_names.end(), tab_name) != tab_names.end();
+//     };
+//     std::vector<Condition> solved_conds;
+//     auto it = conds.begin();
+//     while (it != conds.end()) {
+//         if ((tab_names.compare(it->lhs_col.tab_name) == 0 && it->is_rhs_val) || (it->lhs_col.tab_name.compare(it->rhs_col.tab_name) == 0)) {
+//             solved_conds.emplace_back(std::move(*it));
+//             it = conds.erase(it);
+//         } else {
+//             it++;
+//         }
+//     }
+//     return solved_conds;
+//     return std::vector<Condition>();
+// }
 
-int push_conds(Condition *cond, std::shared_ptr<Plan> plan)
-{
-    // if(auto x = std::dynamic_pointer_cast<ScanPlan>(plan))
-    // {
-    //     if(x->tab_name_.compare(cond->lhs_col.tab_name) == 0) {
-    //         return 1;
-    //     } else if(x->tab_name_.compare(cond->rhs_col.tab_name) == 0){
-    //         return 2;
-    //     } else {
-    //         return 0;
-    //     }
-    // }
-    // else if(auto x = std::dynamic_pointer_cast<JoinPlan>(plan))
-    // {
-    //     int left_res = push_conds(cond, x->left_);
-    //     // 条件已经下推到左子节点
-    //     if(left_res == 3){
-    //         return 3;
-    //     }
-    //     int right_res = push_conds(cond, x->right_);
-    //     // 条件已经下推到右子节点
-    //     if(right_res == 3){
-    //         return 3;
-    //     }
-    //     // 左子节点或右子节点有一个没有匹配到条件的列
-    //     if(left_res == 0 || right_res == 0) {
-    //         return left_res + right_res;
-    //     }
-    //     // 左子节点匹配到条件的右边
-    //     if(left_res == 2) {
-    //         // 需要将左右两边的条件变换位置
-    //         std::map<CompOp, CompOp> swap_op = {
-    //             {OP_EQ, OP_EQ}, {OP_NE, OP_NE}, {OP_LT, OP_GT}, {OP_GT, OP_LT}, {OP_LE, OP_GE}, {OP_GE, OP_LE},
-    //         };
-    //         std::swap(cond->lhs_col, cond->rhs_col);
-    //         cond->op = swap_op.at(cond->op);
-    //     }
-    //     x->conds_.emplace_back(std::move(*cond));
-    //     return 3;
-    // }
-    // return false;
-    return 0;
-}
+// int push_conds(Condition *cond, std::shared_ptr<Plan> plan)
+// {
+//     if(auto x = std::dynamic_pointer_cast<ScanPlan>(plan))
+//     {
+//         if(x->tab_name_.compare(cond->lhs_col.tab_name) == 0) {
+//             return 1;
+//         } else if(x->tab_name_.compare(cond->rhs_col.tab_name) == 0){
+//             return 2;
+//         } else {
+//             return 0;
+//         }
+//     }
+//     else if(auto x = std::dynamic_pointer_cast<JoinPlan>(plan))
+//     {
+//         int left_res = push_conds(cond, x->left_);
+//         // 条件已经下推到左子节点
+//         if(left_res == 3){
+//             return 3;
+//         }
+//         int right_res = push_conds(cond, x->right_);
+//         // 条件已经下推到右子节点
+//         if(right_res == 3){
+//             return 3;
+//         }
+//         // 左子节点或右子节点有一个没有匹配到条件的列
+//         if(left_res == 0 || right_res == 0) {
+//             return left_res + right_res;
+//         }
+//         // 左子节点匹配到条件的右边
+//         if(left_res == 2) {
+//             // 需要将左右两边的条件变换位置
+//             std::map<CompOp, CompOp> swap_op = {
+//                 {OP_EQ, OP_EQ}, {OP_NE, OP_NE}, {OP_LT, OP_GT}, {OP_GT, OP_LT}, {OP_LE, OP_GE}, {OP_GE, OP_LE},
+//             };
+//             std::swap(cond->lhs_col, cond->rhs_col);
+//             cond->op = swap_op.at(cond->op);
+//         }
+//         x->conds_.emplace_back(std::move(*cond));
+//         return 3;
+//     }
+//     return false;
+//     return 0;
+// }
 
 std::shared_ptr<Plan> pop_scan(int *scantbl, std::string table, std::vector<std::string> &joined_tables, 
                 std::vector<std::shared_ptr<Plan>> plans)
@@ -129,7 +131,7 @@ std::shared_ptr<Plan> Planner::physical_optimization(std::shared_ptr<IStmt> quer
     // 其他物理优化
 
     // 处理orderby
-    plan = generate_sort_plan(query, std::move(plan)); 
+    // plan = generate_sort_plan(query, std::move(plan)); 
 
     return plan;
 }
@@ -261,29 +263,29 @@ std::shared_ptr<Plan> Planner::make_one_rel(std::shared_ptr<IStmt> stmt)
 }
 
 
-std::shared_ptr<Plan> Planner::generate_sort_plan(std::shared_ptr<IStmt> query, std::shared_ptr<Plan> plan)
-{
-    // auto x = std::dynamic_pointer_cast<ast::SelectNode>(query->parse);
-    // if(!x->has_sort) {
-    //     return plan;
-    // }
-    // std::vector<std::string> tables = query->tables;
-    // std::vector<ColMeta> all_cols;
-    // for (auto &sel_tab_name : tables) {
-    //     // 这里db_不能写成get_db(), 注意要传指针
-    //     const auto &sel_tab_cols = sm_manager_->db_.get_table(sel_tab_name).cols;
-    //     all_cols.insert(all_cols.end(), sel_tab_cols.begin(), sel_tab_cols.end());
-    // }
-    // TabCol sel_col;
-    // for (auto &col : all_cols) {
-    //     //找需要排序的列
-    //     if(col.name.compare(x->order->cols->col_name) == 0 )
-    //     sel_col = {.tab_name = col.tab_name, .col_name = col.name};
-    // }
-    // return std::make_shared<SortPlan>(T_Sort, std::move(plan), sel_col, 
-    //                                 x->order->orderby_dir == ast::OrderBy_DESC);
-    return nullptr;
-}
+// std::shared_ptr<Plan> Planner::generate_sort_plan(std::shared_ptr<IStmt> query, std::shared_ptr<Plan> plan)
+// {
+//     // auto x = std::dynamic_pointer_cast<ast::SelectNode>(query->parse);
+//     // if(!x->has_sort) {
+//     //     return plan;
+//     // }
+//     // std::vector<std::string> tables = query->tables;
+//     // std::vector<ColMeta> all_cols;
+//     // for (auto &sel_tab_name : tables) {
+//     //     // 这里db_不能写成get_db(), 注意要传指针
+//     //     const auto &sel_tab_cols = sm_manager_->db_.get_table(sel_tab_name).cols;
+//     //     all_cols.insert(all_cols.end(), sel_tab_cols.begin(), sel_tab_cols.end());
+//     // }
+//     // TabCol sel_col;
+//     // for (auto &col : all_cols) {
+//     //     //找需要排序的列
+//     //     if(col.name.compare(x->order->cols->col_name) == 0 )
+//     //     sel_col = {.tab_name = col.tab_name, .col_name = col.name};
+//     // }
+//     // return std::make_shared<SortPlan>(T_Sort, std::move(plan), sel_col, 
+//     //                                 x->order->orderby_dir == ast::OrderBy_DESC);
+//     return nullptr;
+// }
 
 
 /**
@@ -397,19 +399,26 @@ RC Planner::do_planner(std::shared_ptr<IStmt> stmt, Context* context, std::share
     switch(stmt->type()) {
     case StmtType::INSERT_STMT:
         return create_plan(std::static_pointer_cast<InsertStmt>(stmt), plan);
+    case StmtType::SELECT_STMT:
+        return create_plan(std::static_pointer_cast<SelectStmt>(stmt), plan);
     }
 
     return RC::INTERNAL;
 }
 
-RC Planner::create_plan(std::shared_ptr<CreateTableStmt> stmt, std::shared_ptr<Plan>& plan)
-{
-    
-}
-
 RC Planner::create_plan(std::shared_ptr<SelectStmt> stmt, std::shared_ptr<Plan>& plan)
 {
-    
+    shared_ptr<Plan> last_plan = nullptr;
+
+    // TODO: 完成除project plan之外的其他plan
+
+    auto project_plan = make_shared<ProjectPlan>(stmt->project_exprs());
+    if(last_plan) {
+        project_plan->add_child(last_plan);
+    }
+    last_plan = project_plan;
+
+    plan = last_plan;
 }
 
 RC Planner::create_plan(std::shared_ptr<InsertStmt> stmt, std::shared_ptr<Plan>& plan)

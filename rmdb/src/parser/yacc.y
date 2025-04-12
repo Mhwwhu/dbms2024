@@ -36,13 +36,13 @@ WHERE UPDATE SET SELECT INT CHAR FLOAT INDEX AND JOIN EXIT HELP TXN_BEGIN TXN_CO
 %token <sv_bool> VALUE_BOOL
 
 // specify types for non-terminal symbol
-%type <sv_node> stmt dbStmt ddl dml txnStmt setStmt insert
+%type <sv_node> stmt dbStmt ddl dml txnStmt setStmt insert select
 %type <sv_field> field
 %type <sv_fields> fieldList
 %type <sv_type_len> type
 %type <sv_comp_op> op
 %type <sv_expr> expr
-%type <sv_exprs> exprList
+%type <sv_exprs> exprList optGroupbyClause
 %type <sv_expr_chunk> insertList
 %type <sv_val> value
 %type <sv_vals> valueList
@@ -53,9 +53,12 @@ WHERE UPDATE SET SELECT INT CHAR FLOAT INDEX AND JOIN EXIT HELP TXN_BEGIN TXN_CO
 %type <sv_set_clause> setClause
 %type <sv_set_clauses> setClauses
 %type <sv_cond> condition
-%type <sv_conds> whereClause optWhereClause
-%type <sv_orderby>  order_clause opt_order_clause
+/* %type <sv_conds>  */
+%type <sv_conjunction> optWhereClause optHavingClause
+%type <sv_orderby>  optOrderbyClause
 %type <sv_setKnobType> set_knob_type
+%type <sv_int> optLimitClause
+%type <sv_join> optFromClause
 
 %%
 start:
@@ -157,12 +160,11 @@ dml:
     |   UPDATE tbName SET setClauses optWhereClause
     {
         $$ = std::make_shared<UpdateNode>($2, $4, $5);
-    }
-    |   SELECT selector FROM tableList optWhereClause opt_order_clause
-    {
-        $$ = std::make_shared<SelectNode>($2, $4, $5, $6);
     } */
-    insert {
+    | select {
+        $$ = std::move($1);
+    }
+    | insert {
         $$ = std::move($1);
     }
     ;
@@ -171,6 +173,29 @@ insert:
     INSERT INTO tbName optColumnClause insertList {
         $$ = std::make_shared<InsertNode>($3, $4, $5);
     }
+
+select:
+    SELECT exprList optFromClause optGroupbyClause optHavingClause optWhereClause optOrderbyClause optLimitClause {
+        $$ = std::make_shared<SelectNode>($2, $3, $4, $5, $6, $7, $8);
+    }
+
+optFromClause:
+    { $$ = nullptr; }
+
+optGroupbyClause:
+    { $$ = std::vector<std::shared_ptr<Expression>>(); }
+
+optHavingClause:
+    { $$ = nullptr; }
+
+optWhereClause:
+    { $$ = nullptr; }
+
+optOrderbyClause:
+    { $$ = nullptr; }
+
+optLimitClause:
+    { $$ = -1; }
 
 optColumnClause:
     { $$ = std::vector<std::string>(); }

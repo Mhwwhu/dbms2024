@@ -45,10 +45,12 @@ RC UnsafePrinter::write_result_internal(Context* ctx)
 {
     auto& sql_result = ctx->sql_result;
 
+    // 如果没有oper，或者已经执行失败，则直接返回状态
     if((sql_result.has_result() && RM_FAIL(sql_result.return_code())) || !sql_result.oper()) {
         return write_state(ctx);
     }
 
+    // 尝试打开oper，失败则返回状态
     auto oper = sql_result.oper();
     RC rc = oper->open(ctx);
     if(RM_FAIL(rc)) {
@@ -57,7 +59,6 @@ RC UnsafePrinter::write_result_internal(Context* ctx)
         return write_state(ctx);
     }
 
-
     // 如果没有tuple，比如InsertOper, DeleteOper等，则也要输出rc的结果
     if(!oper->has_tuple()) {
         oper->close();
@@ -65,7 +66,94 @@ RC UnsafePrinter::write_result_internal(Context* ctx)
         return write_state(ctx);
     }
 
-    return RC::UNIMPLEMENTED;
+    // 对于有tuple的情况，需要打印tuple
+    auto schema = oper->tuple_schema();
+    if(!schema) {
+        oper->close();
+        return RC::INTERNAL;
+    }
+    int cell_num = schema->cell_num();
+    for(int i = 0; i < cell_num; i++) {
+        auto spec = schema->cell_at(i);
+        string name = spec->name();
+        if(i != 0) {
+            const char* delim = " | ";
+            rc = writer_->writen(delim, strlen(delim));
+            if(RM_FAIL(rc)) {
+                oper->close();
+                return rc;
+            }
+        }
+        rc = writer_->writen(name.c_str(), name.size());
+        if(RM_FAIL(rc)) {
+            oper->close();
+            return rc;
+        }
+    }
+
+    if(cell_num > 0) {
+        rc = writer_->writen("\n", 1);
+        if(RM_FAIL(rc)) {
+            oper->close();
+            return rc;
+        }
+    }
+
+    rc = write_tuple_result(ctx);
+    if(RM_FAIL(rc)) {
+        RC rc_close = oper->close();
+		if (RM_FAIL(rc_close)) rc = rc_close;
+		sql_result.set_return_code(rc);
+		write_state(ctx);
+        return rc;
+    }
+
+    return RC::INTERNAL;
+}
+
+RC UnsafePrinter::write_tuple_result(Context* ctx)
+{
+    RC rc = RC::SUCCESS;
+    auto& sql_result = ctx->sql_result;
+    auto oper = sql_result.oper();
+    shared_ptr<ITuple> tuple;
+    while(RM_SUCC(rc = oper->next())) {
+        tuple = oper->current_tuple();
+        int cell_num = tuple->cell_num();
+
+        for(int i = 0; i < cell_num; i++) {
+            if(i != 0) {
+                const char* delim = " | ";
+                rc = writer_->writen(delim, strlen(delim));
+                if(RM_FAIL(rc)) {
+                    oper->close();
+                    return rc;
+                }
+            }
+
+            Value val;
+            rc = tuple->cell_at(i, val);
+            if(RM_FAIL(rc)) {
+                oper->close();
+                return rc;
+            }
+
+            rc = writer_->writen(val.to_string().c_str(), val.to_string().size());
+            if(RM_FAIL(rc)) {
+                oper->close();
+                return rc;
+            }
+
+            rc = writer_->writen("\n", 1);
+            if(RM_FAIL(rc)) {
+                oper->close();
+                return rc;
+            }
+        }
+    }
+
+    if(rc == RC::RECORD_EOF) rc = RC::SUCCESS;
+    return rc;
 }
 
 RC UnsafePrinter::write_result(Context* ctx)

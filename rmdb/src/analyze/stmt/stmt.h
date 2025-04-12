@@ -2,6 +2,8 @@
 
 #include "common/rc.h"
 
+class BinderContext;
+
 enum StmtType {
     SELECT_STMT,
     DELETE_STMT,

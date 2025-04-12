@@ -19,16 +19,6 @@ See the Mulan PSL v2 for more details. */
 #include "record/rm_defs.h"
 #include "value.h"
 
-
-struct TabCol {
-    std::string tab_name;
-    std::string col_name;
-
-    friend bool operator<(const TabCol &x, const TabCol &y) {
-        return std::make_pair(x.tab_name, x.col_name) < std::make_pair(y.tab_name, y.col_name);
-    }
-};
-
 // struct Value {
 //     AttrType type;  // type of value
 //     union {
@@ -73,22 +63,36 @@ struct TabCol {
 //     }
 // };
 
-enum CompOp { OP_EQ, OP_NE, OP_LT, OP_GT, OP_LE, OP_GE };
-
-struct Condition {
-    TabCol lhs_col;   // left-hand side column
-    CompOp op;        // comparison operator
-    bool is_rhs_val;  // true if right-hand side is a value (not a column)
-    TabCol rhs_col;   // right-hand side column
-    Value rhs_val;    // right-hand side value
-};
-
-struct SetClause {
-    TabCol lhs;
-    Value rhs;
-};
 
 namespace common {
+
+    enum CompOp {
+        EQ, NE, LT, GT, LE, GE
+    };
+    
+    enum SetKnobType {
+        EnableNestLoop, EnableSortMerge
+    };
+    
+    enum class ConjunctionType {
+        AND, OR, NONE
+    };
+
+    enum OrderByDir {
+        OrderBy_DEFAULT,
+        OrderBy_ASC,
+        OrderBy_DESC
+    };
+
+    enum JoinType {
+        INNER_JOIN, LEFT_JOIN, RIGHT_JOIN, FULL_JOIN, NONE
+    };
+    
+    enum VirtualTabType {
+        TABLE,
+        VIEW,
+        SUBQUERY
+    };
 
     int compareIgnoreCase(const char* str1, const char* str2);
 

@@ -15,12 +15,11 @@ See the Mulan PSL v2 for more details. */
 
 #include "common/type/attr_type.h"
 #include "expression/expression.h"
+#include "common/common.h"
 
 namespace ast {
 
-enum SetKnobType {
-    EnableNestLoop, EnableSortMerge
-};
+struct JoinNode;
 
 // Base class for tree nodes
 struct TreeNode {
@@ -117,45 +116,38 @@ struct ConditionNode : public TreeNode {
 };
 
 struct CompareNode : public ConditionNode {
-    enum CompOp {
-        EQ, NE, LT, GT, LE, GE
-    };
-
     std::shared_ptr<Expression> left;
     std::shared_ptr<Expression> right;
-    CompOp comp;
+    common::CompOp comp;
 
-    CompareNode(std::shared_ptr<Expression> left_, std::shared_ptr<Expression> right_, CompOp comp_)
+    CompareNode(std::shared_ptr<Expression> left_, std::shared_ptr<Expression> right_, common::CompOp comp_)
     : left(left_), right(right_), comp(comp_) {}
 };
 
 struct ConjunctionNode : public TreeNode {
-    enum ConjunctionType {
-        AND, OR, NONE
-    };
-
     std::shared_ptr<ConjunctionNode> left;
     std::shared_ptr<ConjunctionNode> right;
     std::shared_ptr<ConditionNode> condition;
-    ConjunctionType type;
+    common::ConjunctionType type;
 
     ConjunctionNode(std::shared_ptr<ConditionNode> condition_)
-    : condition(condition), type(ConjunctionType::NONE) {}
+    : condition(condition), type(common::ConjunctionType::NONE) {}
 
-    ConjunctionNode(std::shared_ptr<ConjunctionNode> left_, std::shared_ptr<ConjunctionNode> right_, ConjunctionType type_)
+    ConjunctionNode(std::shared_ptr<ConjunctionNode> left_, std::shared_ptr<ConjunctionNode> right_, common::ConjunctionType type_)
     : left(left_), right(right_), type(type_) {}
+};
+
+struct OrderByUnitNode : public TreeNode {
+    std::shared_ptr<Expression> expr;
+    common::OrderByDir direction;
+
+    OrderByUnitNode(std::shared_ptr<Expression> expr_, common::OrderByDir dir) : expr(std::move(expr_)), direction(dir) {}
 };
 
 struct OrderByNode : public TreeNode
 {
-    enum OrderByDir {
-        OrderBy_DEFAULT,
-        OrderBy_ASC,
-        OrderBy_DESC
-    };
-
-    std::vector<std::pair<std::shared_ptr<Expression>, OrderByDir>> units;
-    OrderByNode(std::vector<std::pair<std::shared_ptr<Expression>, OrderByDir>> units_) :
+    std::vector<OrderByUnitNode> units;
+    OrderByNode(std::vector<OrderByUnitNode> units_) :
        units(std::move(units_)) {}
 };
 
@@ -169,22 +161,52 @@ struct InsertNode : public TreeNode {
             tab_name(std::move(tab_name_)), decl_cols(decl_cols_), exprs(std::move(exprs_)) {}
 };
 
-struct JoinNode : public TreeNode {
-    enum JoinType {
-        INNER_JOIN, LEFT_JOIN, RIGHT_JOIN, FULL_JOIN, NONE
-    };
+struct SelectNode : public TreeNode {
+    std::vector<std::shared_ptr<Expression>> project;
+    std::shared_ptr<JoinNode> join_tree;
+    std::vector<std::shared_ptr<Expression>> group_by;
+    std::shared_ptr<ConjunctionNode> having_conj;
+    std::shared_ptr<ConjunctionNode> where_conj;
+    std::shared_ptr<OrderByNode> orderby;
+    int limit = -1;
 
+    SelectNode( const std::vector<std::shared_ptr<Expression>>& project_,
+                std::shared_ptr<JoinNode> join_tree_,
+                const std::vector<std::shared_ptr<Expression>>& group_by_,
+                std::shared_ptr<ConjunctionNode> having_conj_,
+                std::shared_ptr<ConjunctionNode> where_conj_,
+                std::shared_ptr<OrderByNode> orderby_,
+                int limit_)
+                : project(std::move(project_)), join_tree(std::move(join_tree)), group_by(std::move(group_by_)),
+                having_conj(std::move(having_conj_)), where_conj(std::move(where_conj_)), orderby(std::move(orderby_)),  limit(limit_)
+                {}
+};
+
+struct VirtualTableNode : public TreeNode {
+    enum Type {
+        TABLE_OR_VIEW, SUBQUERY
+    };
+    std::string alias;
+    Type type;
+    std::string name;
+    std::shared_ptr<SelectNode> subquery;
+
+    VirtualTableNode(std::string alias_, std::string name_) : alias(alias_), type(Type::TABLE_OR_VIEW), name(name_) {}
+    VirtualTableNode(std::string alias_, std::shared_ptr<SelectNode> subquery_) : alias(alias_), subquery(std::move(subquery_)) {}
+};
+
+struct JoinNode : public TreeNode {
     std::shared_ptr<JoinNode> left;
     std::shared_ptr<JoinNode> right;
     std::shared_ptr<ConjunctionNode> conjunction;
-    std::string table_name;
-    JoinType type;
+    std::shared_ptr<VirtualTableNode> vtable;
+    common::JoinType type;
 
     JoinNode(std::shared_ptr<JoinNode> left_, std::shared_ptr<JoinNode> right_,
-            std::shared_ptr<ConjunctionNode> conjunction_, JoinType type_) :
+            std::shared_ptr<ConjunctionNode> conjunction_, common::JoinType type_) :
             left(left_), right(right_), conjunction(conjunction_), type(type_) {}
 
-    JoinNode(std::string table_name_) : table_name(table_name_), type(JoinType::NONE) {}
+    JoinNode(std::shared_ptr<VirtualTableNode> vtable_) : vtable(vtable_), type(common::JoinType::NONE) {}
 };
 
 // struct SelectNode : public TreeNode {
@@ -225,7 +247,7 @@ struct SemValue {
     bool sv_bool;
     std::vector<std::string> sv_strs;
 
-    CompareNode::CompOp sv_comp_op;
+    common::CompOp sv_comp_op;
 
     std::shared_ptr<TreeNode> sv_node;
 
@@ -258,7 +280,9 @@ struct SemValue {
 
     std::shared_ptr<OrderByNode> sv_orderby;
 
-    SetKnobType sv_setKnobType;
+    std::shared_ptr<JoinNode> sv_join;
+
+    common::SetKnobType sv_setKnobType;
 };
 
 extern std::shared_ptr<ast::TreeNode> parse_tree;

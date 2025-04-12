@@ -21,6 +21,7 @@ See the Mulan PSL v2 for more details. */
 #include "common/rc.h"
 #include "deps/jsoncpp/json/json.h"
 #include "common/type/attr_type.h"
+#include "common/common.h"
 
 static const Json::StaticString FIELD_COL_NAME("name");
 static const Json::StaticString FIELD_COL_TYPE("type");
@@ -152,18 +153,22 @@ struct IndexMeta {
     }
 };
 
+struct VirtualTabMeta {
+    std::string alias_name;
+    common::VirtualTabType type;
+
+    VirtualTabMeta(std::string alias, common::VirtualTabType type): alias_name(alias), type(type) {}
+    VirtualTabMeta() = default;
+    virtual ~VirtualTabMeta() = default;
+};
+
 /* 表元数据 */
-struct TabMeta {
+struct TabMeta : public VirtualTabMeta{
     std::string name;                   // 表名称
     std::vector<ColMeta> cols;          // 表包含的字段
     std::vector<IndexMeta> indexes;     // 表上建立的索引
 
-    TabMeta(){}
-
-    TabMeta(const TabMeta &other) {
-        name = other.name;
-        for(auto col : other.cols) cols.push_back(col);
-    }
+    TabMeta(): VirtualTabMeta("", common::VirtualTabType::TABLE){}
 
     /* 判断当前表中是否存在名为col_name的字段 */
     bool is_col(const std::string &col_name) const {

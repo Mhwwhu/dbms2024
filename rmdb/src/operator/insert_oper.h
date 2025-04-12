@@ -19,7 +19,7 @@ public:
 
     std::shared_ptr<ITuple> current_tuple() const override { return nullptr; }
 
-    RC tuple_schema(TupleSchema& schema) const override { return RC::UNSUPPORTED; }
+    std::shared_ptr<TupleSchema> tuple_schema() const override { return nullptr; }
 
     bool has_tuple() const override { return false; }
 

@@ -17,6 +17,7 @@ add_subdirectory(tuple)
 add_subdirectory(plan)
 add_subdirectory(operator)
 add_subdirectory(printer)
+add_subdirectory(binder)
 add_subdirectory(test)
 
 set(SOURCES portal.cpp)

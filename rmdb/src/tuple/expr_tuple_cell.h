@@ -15,6 +15,8 @@ public:
         return false;
     }
 
+    std::string name() const override { return expr_->name(); }
+
 private:
     std::shared_ptr<const Expression> expr_;
 };
