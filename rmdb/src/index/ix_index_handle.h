@@ -12,6 +12,7 @@ See the Mulan PSL v2 for more details. */
 
 #include "ix_defs.h"
 #include "transaction/transaction.h"
+#include "common/rc.h"
 
 enum class Operation { FIND = 0, INSERT, DELETE };  // 三种操作：查找、插入、删除
 
@@ -91,6 +92,8 @@ class IxNodeHandle {
     page_id_t get_page_no() { return page->get_page_id().page_no; }
 
     PageId get_page_id() { return page->get_page_id(); }
+
+    Page* get_page(){ return this->page; }
 
     page_id_t get_next_leaf() { return page_hdr->next_leaf; }
 
