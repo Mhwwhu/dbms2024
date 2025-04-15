@@ -740,12 +740,12 @@ bool IxIndexHandle::coalesce(IxNodeHandle **neighbor_node, IxNodeHandle **node, 
  * @note iid和rid存的不是一个东西，rid是上层传过来的记录位置，iid是索引内部生成的索引槽位置
  */
 Rid IxIndexHandle::get_rid(const Iid &iid) const {
-    IxNodeHandle *node = fetch_node(iid.page_no);
-    if (iid.slot_no >= node->get_size()) {
-        throw IndexEntryNotFoundError();
-    }
-    buffer_pool_manager_->unpin_page(node->get_page_id(), false);  // unpin it!
-    return *node->get_rid(iid.slot_no);
+    // IxNodeHandle *node = fetch_node(iid.page_no);
+    // if (iid.slot_no >= node->get_size()) {
+    //     throw IndexEntryNotFoundError();
+    // }
+    // buffer_pool_manager_->unpin_page(node->get_page_id(), false);  // unpin it!
+    // return *node->get_rid(iid.slot_no);
 }
 
 /**

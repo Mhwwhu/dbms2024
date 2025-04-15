@@ -6,6 +6,7 @@
 #include "binder_context.h"
 
 class JointreeContext {
+public:
     JointreeContext(std::shared_ptr<BinderContext> outer)
     : outer_context_(outer), is_leaf_(true) {}
 
@@ -26,6 +27,14 @@ class JointreeContext {
             vtables_.insert(vtable);
         }
         is_leaf_ = false;
+        return RC::SUCCESS;
+    }
+
+    RC set_vtable(std::shared_ptr<VirtualTabMeta> vtable)
+    {
+        if(!vtables_.empty()) return RC::INTERNAL;
+        vtables_.insert(vtable);
+        is_leaf_ = true;
         return RC::SUCCESS;
     }
 

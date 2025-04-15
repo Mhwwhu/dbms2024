@@ -3,6 +3,7 @@
 #include "common/rc.h"
 
 class BinderContext;
+class JointreeContext;
 
 enum StmtType {
     SELECT_STMT,
