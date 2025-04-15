@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details. */
 #include "stmt/drop_table_stmt.h"
 #include "stmt/insert_stmt.h"
 #include "stmt/select_stmt.h"
+#include "stmt/show_tables_stmt.h"
 #include "common/context.h"
 
 /**
@@ -89,6 +90,10 @@ RC Analyze::handle_request(Context* context)
 RC Analyze::do_analyze(std::shared_ptr<ast::TreeNode> root, std::shared_ptr<IStmt>& stmt)
 {
     RC rc = RC::SUCCESS;
+    if(auto node = std::dynamic_pointer_cast<ast::ShowTables>(root)){
+        rc = ShowTablesStmt::create(node, stmt);
+        return rc;
+    }
     if(auto node = std::dynamic_pointer_cast<ast::CreateTable>(root)) {
         rc = CreateTableStmt::create(sm_manager_, node, stmt);
         return rc;

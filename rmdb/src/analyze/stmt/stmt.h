@@ -15,6 +15,7 @@ enum StmtType {
     DROP_INDEX_STMT,
     DESC_TABLE_STMT,
     SET_VARIABLE_STMT,
+    SHOW_TABLES_STMT,
 };
 
 class IStmt {

@@ -1,6 +1,6 @@
-#line 2 "/home/mhwwhu/db2024/rmdb/src/parser/lex.yy.cpp"
+#line 2 "/home/xirro/dbms2024/rmdb/src/parser/lex.yy.cpp"
 
-#line 4 "/home/mhwwhu/db2024/rmdb/src/parser/lex.yy.cpp"
+#line 4 "/home/xirro/dbms2024/rmdb/src/parser/lex.yy.cpp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -646,9 +646,9 @@ char *yytext;
         } \
     }
 
-#line 650 "/home/mhwwhu/db2024/rmdb/src/parser/lex.yy.cpp"
+#line 650 "/home/xirro/dbms2024/rmdb/src/parser/lex.yy.cpp"
 
-#line 652 "/home/mhwwhu/db2024/rmdb/src/parser/lex.yy.cpp"
+#line 652 "/home/xirro/dbms2024/rmdb/src/parser/lex.yy.cpp"
 
 #define INITIAL 0
 #define STATE_COMMENT 1
@@ -886,7 +886,7 @@ YY_DECL
 
 #line 48 "lex.l"
     /* block comment */
-#line 890 "/home/mhwwhu/db2024/rmdb/src/parser/lex.yy.cpp"
+#line 890 "/home/xirro/dbms2024/rmdb/src/parser/lex.yy.cpp"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1232,7 +1232,7 @@ YY_RULE_SETUP
 #line 126 "lex.l"
 ECHO;
 	YY_BREAK
-#line 1236 "/home/mhwwhu/db2024/rmdb/src/parser/lex.yy.cpp"
+#line 1236 "/home/xirro/dbms2024/rmdb/src/parser/lex.yy.cpp"
 
 	case YY_END_OF_BUFFER:
 		{

@@ -2,6 +2,7 @@
 #include "common/context.h"
 #include "create_table_executor.h"
 #include "drop_table_executor.h"
+#include "show_tables_executor.h"
 
 RC CommandExecutor::execute(Context* context)
 {
@@ -19,7 +20,11 @@ RC CommandExecutor::execute(Context* context)
         rc = executor.execute(context);
         break;
     }
+    case StmtType::SHOW_TABLES_STMT: {
+        ShowTablesExecutor executor;
+        rc = executor.execute(context);
+        break;
     }
-
+    }
     return rc;
 }
