@@ -143,12 +143,11 @@ RC UnsafePrinter::write_tuple_result(Context* ctx)
                 oper->close();
                 return rc;
             }
-
-            rc = writer_->writen("\n", 1);
-            if(RM_FAIL(rc)) {
-                oper->close();
-                return rc;
-            }
+        }
+        rc = writer_->writen("\n", 1);
+        if(RM_FAIL(rc)) {
+            oper->close();
+            return rc;
         }
     }
 

@@ -85,7 +85,7 @@ namespace common {
     };
 
     enum JoinType {
-        INNER_JOIN, LEFT_JOIN, RIGHT_JOIN, FULL_JOIN, NONE
+        INNER_JOIN, LEFT_JOIN, RIGHT_JOIN, FULL_JOIN, CARTESIAN_PRODUCT, NONE
     };
     
     enum VirtualTabType {

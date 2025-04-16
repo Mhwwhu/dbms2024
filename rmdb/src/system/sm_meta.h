@@ -168,7 +168,7 @@ struct TabMeta : public VirtualTabMeta{
     std::vector<ColMeta> cols;          // 表包含的字段
     std::vector<IndexMeta> indexes;     // 表上建立的索引
 
-    TabMeta(): VirtualTabMeta("", common::VirtualTabType::TABLE){}
+    TabMeta(): VirtualTabMeta(name, common::VirtualTabType::TABLE){}
 
     /* 判断当前表中是否存在名为col_name的字段 */
     bool is_col(const std::string &col_name) const {
@@ -208,7 +208,7 @@ struct TabMeta : public VirtualTabMeta{
     // }
 
     /* 根据字段名称获取字段元数据 */
-    RC get_col(const std::string &col_name, ColMeta& col) {
+    RC get_col(const std::string &col_name, ColMeta& col) const {
         auto pos = std::find_if(cols.begin(), cols.end(), [&](const ColMeta &col) { return col.name == col_name; });
         if (pos == cols.end()) {
             return RC::SCHEMA_FIELD_NOT_EXIST;
@@ -264,6 +264,7 @@ struct TabMeta : public VirtualTabMeta{
         }
 
         name = name_value.asCString();
+        VirtualTabMeta::alias_name = name;
 
         return RC::SUCCESS;
     }

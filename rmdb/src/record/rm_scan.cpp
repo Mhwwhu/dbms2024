@@ -22,7 +22,7 @@ RecScan::RecScan(const RmFileHandle *file_handle, std::shared_ptr<ConjunctionExp
 
 }
 
-RC RecScan::open() {
+RC RecScan::open(Context* ctx) {
 
 }
 
@@ -33,6 +33,10 @@ RC RecScan::next() {
     // Todo:
     // 找到文件中下一个存放了记录的非空闲位置，用rid_来指向这个位置
 
+}
+
+RC RecScan::close() {
+    
 }
 
 /**

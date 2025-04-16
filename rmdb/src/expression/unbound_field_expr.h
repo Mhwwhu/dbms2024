@@ -4,7 +4,7 @@
 
 class UnboundFieldExpr : public Expression {
 public:
-    UnboundFieldExpr(const std::string table_name, const std::string& field_name)
+    UnboundFieldExpr(const std::string& table_name, const std::string& field_name)
     : table_name_(table_name), field_name_(field_name) {}
     ~UnboundFieldExpr() override = default;
 

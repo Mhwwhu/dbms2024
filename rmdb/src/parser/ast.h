@@ -177,7 +177,7 @@ struct SelectNode : public TreeNode {
                 std::shared_ptr<ConjunctionNode> where_conj_,
                 std::shared_ptr<OrderByNode> orderby_,
                 int limit_)
-                : project(std::move(project_)), join_tree(std::move(join_tree)), group_by(std::move(group_by_)),
+                : project(std::move(project_)), join_tree(std::move(join_tree_)), group_by(std::move(group_by_)),
                 having_conj(std::move(having_conj_)), where_conj(std::move(where_conj_)), orderby(std::move(orderby_)),  limit(limit_)
                 {}
 };
@@ -249,6 +249,8 @@ struct SemValue {
 
     common::CompOp sv_comp_op;
 
+    common::JoinType sv_join_type;
+
     std::shared_ptr<TreeNode> sv_node;
 
     std::shared_ptr<TypeLen> sv_type_len;
@@ -281,6 +283,8 @@ struct SemValue {
     std::shared_ptr<OrderByNode> sv_orderby;
 
     std::shared_ptr<JoinNode> sv_join;
+
+    std::shared_ptr<VirtualTableNode> sv_vtable;
 
     common::SetKnobType sv_setKnobType;
 };

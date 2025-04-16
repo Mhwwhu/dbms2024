@@ -14,6 +14,8 @@ RC OperatorGenerator::generate(std::shared_ptr<Plan> plan, std::shared_ptr<Opera
         return create_operator(std::static_pointer_cast<InsertPlan>(plan), oper);
     case PlanTag::PROJECT_PLAN:
         return create_operator(std::static_pointer_cast<ProjectPlan>(plan), oper);
+    case PlanTag::TABLE_SCAN_PLAN:
+        return create_operator(std::static_pointer_cast<TableScanPlan>(plan), oper);
     }
     
     return RC::SUCCESS;
@@ -61,7 +63,7 @@ RC OperatorGenerator::create_operator(std::shared_ptr<ProjectPlan> plan, std::sh
 
     if(!child_plans.empty()) {
         auto child_plan = child_plans.front();
-        rc = generate(plan, child_oper);
+        rc = generate(child_plan, child_oper);
         if(RM_FAIL(rc)) return rc;
     }
     if(child_plans.size() > 1) return RC::INTERNAL;
