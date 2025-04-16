@@ -36,7 +36,7 @@ WHERE UPDATE SET SELECT INT CHAR FLOAT INDEX AND JOIN EXIT HELP TXN_BEGIN TXN_CO
 %token <sv_bool> VALUE_BOOL
 
 // specify types for non-terminal symbol
-%type <sv_node> stmt dbStmt ddl dml txnStmt setStmt insert select
+%type <sv_node> stmt dbStmt ddl dml txnStmt setStmt insert select delete update
 %type <sv_field> field
 %type <sv_fields> fieldList
 %type <sv_type_len> type
@@ -161,6 +161,9 @@ dml:
     {
         $$ = std::make_shared<UpdateNode>($2, $4, $5);
     } */
+    | delete {
+        $$ = std::move($1);
+    }
     | select {
         $$ = std::move($1);
     }
@@ -179,6 +182,11 @@ select:
         $$ = std::make_shared<SelectNode>($2, $3, $4, $5, $6, $7, $8);
     }
 
+delete:
+    DELETE FROM tbName optWhereClause {
+        $$ = std::make_shared<DeleteNode>($3, $4);
+    }
+    
 optFromClause:
     { $$ = nullptr; }
 

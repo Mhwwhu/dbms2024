@@ -16,6 +16,7 @@ See the Mulan PSL v2 for more details. */
 #include "record_printer.h"
 #include "insert_plan.h"
 #include "project_plan.h"
+#include "delete_plan.h"
 
 using namespace std;
 
@@ -401,11 +402,26 @@ RC Planner::do_planner(std::shared_ptr<IStmt> stmt, Context* context, std::share
         return create_plan(std::static_pointer_cast<InsertStmt>(stmt), plan);
     case StmtType::SELECT_STMT:
         return create_plan(std::static_pointer_cast<SelectStmt>(stmt), plan);
+    case StmtType::DELETE_STMT:
+        return create_plan(std::static_pointer_cast<DeleteStmt>(stmt), plan);
     }
+    
 
     return RC::INTERNAL;
 }
 
+RC Planner::create_plan(std::shared_ptr<DeleteStmt> stmt ,std::shared_ptr<Plan>&plan){
+    RC rc = RC::SUCCESS;
+    shared_ptr<Plan> last_plan = nullptr;
+    if(stmt->where_clause()) {
+
+
+    }
+         plan = std::make_shared<DeletePlan>(stmt->table_meta());
+
+
+    return rc;
+}
 RC Planner::create_plan(std::shared_ptr<SelectStmt> stmt, std::shared_ptr<Plan>& plan)
 {
     shared_ptr<Plan> last_plan = nullptr;

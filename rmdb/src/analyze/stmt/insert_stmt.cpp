@@ -34,12 +34,13 @@ RC InsertStmt::create(SmManager* sm_manager, std::shared_ptr<ast::InsertNode> in
         }
     }
 
-
+    //insert_value 
     if(true) {
         auto insert_rows = insert_node->exprs;
         stmt = std::make_shared<InsertStmt>(table_meta, decl_cols, insert_rows);
         return RC::SUCCESS;
     }
+    //Todo:insert select 
     else {
         return RC::UNIMPLEMENTED;
     }

@@ -209,6 +209,14 @@ struct JoinNode : public TreeNode {
     JoinNode(std::shared_ptr<VirtualTableNode> vtable_) : vtable(vtable_), type(common::JoinType::NONE) {}
 };
 
+struct DeleteNode : public TreeNode {
+    std::string tab_name;
+
+    std::shared_ptr<ConjunctionNode> where_conj;
+
+    DeleteNode(std::string tab_name_, std::shared_ptr<ConjunctionNode> where_conj_) :
+            tab_name(std::move(tab_name_)), where_conj(std::move(where_conj_)) {}
+}
 // struct SelectNode : public TreeNode {
 //     std::vector<std::shared_ptr<Col>> cols;
 //     std::vector<std::string> tabs;
