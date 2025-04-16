@@ -21,7 +21,7 @@ public:
     static RC create(SmManager* manager, std::shared_ptr<ast::SelectNode> select_node, std::shared_ptr<IStmt>& select_stmt, 
         std::shared_ptr<BinderContext> outer_context);
 
-    std::shared_ptr<JoinClause> join_tree() const { return join_tree_; }
+    std::shared_ptr<JoinClause> join_clause() const { return join_tree_; }
     std::shared_ptr<FilterClause> where_clause() const { return where_clause_; }
     std::shared_ptr<FilterClause> having_clause() const { return having_clause_; }
     std::shared_ptr<OrderByClause> orderby_clause() const { return orderby_clause_; }

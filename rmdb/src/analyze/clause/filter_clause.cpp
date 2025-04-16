@@ -1,5 +1,5 @@
 #include "filter_clause.h"
-#include "comparison_expr.h"
+#include "expression/comparison_expr.h"
 #include "binder/binder_context.h"
 
 using namespace ast;
@@ -46,5 +46,11 @@ RC FilterClause::create(SmManager* manager, std::shared_ptr<ast::ConjunctionNode
     RC rc = make_conjunction_expr(filter_node, conj_expr, outer_context);
     if(RM_FAIL(rc)) return rc;
     filter_clause = make_shared<FilterClause>(conj_expr);
+    return RC::SUCCESS;
+}
+
+RC FilterClause::create(SmManager* manager, std::shared_ptr<ast::ConjunctionNode> filter_node, std::shared_ptr<FilterClause>& filter_clause,
+    std::shared_ptr<JointreeContext> jointree_context)
+{
     return RC::SUCCESS;
 }

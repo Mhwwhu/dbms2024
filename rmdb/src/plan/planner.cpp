@@ -16,10 +16,12 @@ See the Mulan PSL v2 for more details. */
 #include "record_printer.h"
 #include "insert_plan.h"
 #include "project_plan.h"
+#include "table_scan_plan.h"
 #include "delete_plan.h"
 #include "fliter_plan.h"
 
 using namespace std;
+using namespace common;
 
 // 目前的索引匹配规则为：完全匹配索引字段，且全部为单点查询，不会自动调整where条件的顺序
 // bool Planner::get_index_cols(std::string tab_name, std::vector<Condition> curr_conds, std::vector<std::string>& index_col_names) {
@@ -428,6 +430,24 @@ RC Planner::create_plan(std::shared_ptr<SelectStmt> stmt, std::shared_ptr<Plan>&
     shared_ptr<Plan> last_plan = nullptr;
 
     // TODO: 完成除project plan之外的其他plan
+
+    // 构建join的plan或者table scan plan
+    auto jointree = stmt->join_clause()->jointree();
+
+    // 如果只有一个表，则构建TableScanPlan或者视图/子查询的plan
+    if(jointree->type == common::JoinType::NONE) {
+        auto vtable = jointree->vtable;
+        switch(vtable->type) {
+        case VirtualTabType::TABLE:
+            // 如果是table，我们先构建TableScanPlan，使用索引的检查放到rewrite部分实现，如果需要使用索引则替换为IndexScanPlan。
+            // 因为索引的使用与where子句相关，在这一步并没有获取到全面的信息。
+            last_plan = make_shared<TableScanPlan>(static_pointer_cast<TabMeta>(vtable), nullptr);
+            break;
+            
+        default:
+            return RC::UNIMPLEMENTED;
+        }
+    }
 
     auto project_plan = make_shared<ProjectPlan>(stmt->project_exprs());
     if(last_plan) {

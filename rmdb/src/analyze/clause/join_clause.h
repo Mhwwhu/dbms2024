@@ -19,15 +19,17 @@ struct JoinTree {
 
 class JoinClause {
 public:
-    JoinClause(std::shared_ptr<JoinTree> jointree_) : jointree(jointree_) {}
+    JoinClause(std::shared_ptr<JoinTree> jointree_) : jointree_(jointree_) {}
 
     static RC create(SmManager* sm_manager, std::shared_ptr<ast::JoinNode> join_node, std::shared_ptr<JoinClause>& join,
-        std::shared_ptr<BinderContext> outer_context);
+        std::shared_ptr<BinderContext> outer_context, std::shared_ptr<BinderContext>& cur_context);
+
+    std::shared_ptr<JoinTree> jointree() const { return jointree_; }
 
 private:
     static RC make_jointree(SmManager* sm_manager, std::shared_ptr<ast::JoinNode> join_node, std::shared_ptr<JoinTree>& jointree,
-        std::shared_ptr<BinderContext> outer_context);
+        std::shared_ptr<JointreeContext> jointree_context);
 
 private:
-    std::shared_ptr<JoinTree> jointree;
+    std::shared_ptr<JoinTree> jointree_;
 };

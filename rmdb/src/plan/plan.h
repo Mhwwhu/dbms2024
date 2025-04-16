@@ -23,6 +23,7 @@ typedef enum PlanTag{
    INSERT_PLAN,
    DELETE_PLAN,
    PROJECT_PLAN,
+   TABLE_SCAN_PLAN,
    FLITER_PLAN,
 } PlanTag;
 

@@ -15,7 +15,8 @@ See the Mulan PSL v2 for more details. */
  * @brief 初始化file_handle和rid
  * @param file_handle
  */
-RecScan::RecScan(const RmFileHandle *file_handle) : file_handle_(file_handle) {
+RecScan::RecScan(const RmFileHandle *file_handle, std::shared_ptr<ConjunctionExpr> filter)
+ : file_handle_(file_handle), filter_(filter) {
     // Todo:
     // 初始化file_handle和rid（指向第一个存放了记录的位置）
 

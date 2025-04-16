@@ -13,6 +13,7 @@ enum OperatorType {
     PROJECT_OPER,
     INSERT_OPER,
     CHUNK_GET_OPER,
+    TABLE_SCAN_OPER,
 };
 
 class Operator {

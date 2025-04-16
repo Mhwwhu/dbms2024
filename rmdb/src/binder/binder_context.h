@@ -8,9 +8,9 @@
 
 class VTableMetaComparator {
 public:
-    bool operator()(const VirtualTabMeta& a, const VirtualTabMeta& b)
+    bool operator()(const std::shared_ptr<VirtualTabMeta>& a, const std::shared_ptr<VirtualTabMeta>& b) const
     {
-        return a.alias_name < b.alias_name;
+        return a->alias_name < b->alias_name;
     }
 };
 

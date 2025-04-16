@@ -5,6 +5,9 @@
 #include "parser/ast.h"
 #include "expression/conjunction_expr.h"
 
+class BinderContext;
+class JointreeContext;
+
 class FilterClause {
 public:
     FilterClause(std::shared_ptr<ConjunctionExpr> conj) : conj_expr_(conj) {}
@@ -12,6 +15,9 @@ public:
 
     static RC create(SmManager* manager, std::shared_ptr<ast::ConjunctionNode> filter_node, std::shared_ptr<FilterClause>& filter_clause,
         std::shared_ptr<BinderContext> outer_context);
+
+    static RC create(SmManager* manager, std::shared_ptr<ast::ConjunctionNode> filter_node, std::shared_ptr<FilterClause>& filter_clause,
+        std::shared_ptr<JointreeContext> jointree_context);
 
     std::shared_ptr<ConjunctionExpr> conjunction_expr() const { return conj_expr_; }
 
