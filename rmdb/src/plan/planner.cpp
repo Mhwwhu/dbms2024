@@ -17,6 +17,7 @@ See the Mulan PSL v2 for more details. */
 #include "insert_plan.h"
 #include "project_plan.h"
 #include "delete_plan.h"
+#include "fliter_plan.h"
 
 using namespace std;
 
@@ -406,7 +407,6 @@ RC Planner::do_planner(std::shared_ptr<IStmt> stmt, Context* context, std::share
         return create_plan(std::static_pointer_cast<DeleteStmt>(stmt), plan);
     }
     
-
     return RC::INTERNAL;
 }
 
@@ -415,6 +415,7 @@ RC Planner::create_plan(std::shared_ptr<DeleteStmt> stmt ,std::shared_ptr<Plan>&
     shared_ptr<Plan> last_plan = nullptr;
     if(stmt->where_clause()) {
 
+       // rc = create_plan(std::static_pointer_cast<FilterClause>(stmt->where_clause()),last_plan);
 
     }
          plan = std::make_shared<DeletePlan>(stmt->table_meta());
