@@ -2,6 +2,7 @@
 #include "chunk_get_oper.h"
 #include "insert_oper.h"
 #include "project_oper.h"
+#include "table_scan_oper.h"
 #include "tuple/expr_tuple.h"
 
 using namespace std;
@@ -70,5 +71,15 @@ RC OperatorGenerator::create_operator(std::shared_ptr<ProjectPlan> plan, std::sh
         oper->add_child(child_oper);
     }
 
+    return RC::SUCCESS;
+}
+
+RC OperatorGenerator::create_operator(std::shared_ptr<TableScanPlan> plan, std::shared_ptr<Operator>& oper)
+{
+    RC rc = RC::SUCCESS;
+    // table scan不允许有子节点
+    if(!plan->children().empty()) return RC::INTERNAL;
+
+    oper = make_shared<TableScanOper>(plan->table_meta(), plan->filter());
     return RC::SUCCESS;
 }
