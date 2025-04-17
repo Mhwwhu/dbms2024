@@ -14,7 +14,7 @@ struct JoinTree {
 
     JoinTree(common::JoinType type_, std::shared_ptr<JoinTree> left_, std::shared_ptr<JoinTree> right_, std::shared_ptr<FilterClause> condition_,
         std::shared_ptr<VirtualTabMeta> vtable_)
-        : type(type), left(std::move(left_)), right(std::move(right_)), condition(std::move(condition_)), vtable(std::move(vtable_)) {}
+        : type(type_), left(std::move(left_)), right(std::move(right_)), condition(std::move(condition_)), vtable(std::move(vtable_)) {}
 };
 
 class JoinClause {

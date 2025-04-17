@@ -71,6 +71,7 @@ single_op ";"|"("|")"|","|"*"|"="|">"|"<"|"."
 "DELETE" { return DELETE; }
 "FROM" { return FROM; }
 "WHERE" { return WHERE; }
+"ON" { return ON; }
 "UPDATE" { return UPDATE; }
 "SET" { return SET; }
 "SELECT" { return SELECT; }

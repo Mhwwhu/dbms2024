@@ -6,16 +6,13 @@
 
 class FieldExpr : public Expression {
 public:
-    FieldExpr(const ColMeta& field, const TabMeta& table)
-    : field_(field), table_(table) {}
+    FieldExpr(std::shared_ptr<VirtualFieldMeta> vfield, std::shared_ptr<VirtualTabMeta> vtable)
+    : vfield_(vfield), vtable_(vtable) {}
     ~FieldExpr() override = default;
 
     bool equal(const Expression& other) const override;
 
-    RC get_value(const ITuple& tuple, Value& value) const override
-    {
-        return tuple.find_cell(ExprTupleCellSpec(std::shared_ptr<const Expression>(this)), value);
-    }
+    RC get_value(const ITuple& tuple, Value& value) const override;
 
     RC try_get_value(Value& value) const override 
     {
@@ -24,15 +21,15 @@ public:
 
     ExprType type() const override { return ExprType::FIELD; }
 
-    AttrType value_type() const override { return field_.type; }
+    AttrType value_type() const override { return vfield_->attr_type; }
 
-    int value_length() const override { return field_.len; }
+    int value_length() const override { return vfield_->len; }
 
-    const ColMeta& field_meta() const { return field_; }
+    std::shared_ptr<VirtualFieldMeta> vfield_meta() const { return vfield_; }
 
-    const TabMeta& table_meta() const { return table_; }
+    std::shared_ptr<VirtualTabMeta> vtable_meta() const { return vtable_; }
 
 private:
-    ColMeta field_;
-    TabMeta table_;
+    std::shared_ptr<VirtualFieldMeta> vfield_;
+    std::shared_ptr<VirtualTabMeta> vtable_;
 };

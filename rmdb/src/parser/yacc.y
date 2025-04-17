@@ -3,7 +3,7 @@
 #include "yacc.tab.h"
 #include "expression/expression.h"
 #include "expression/value_expr.h"
-#include "expression/field_expr.h"
+#include "expression/unbound_field_expr.h"
 #include <iostream>
 #include <memory>
 
@@ -24,7 +24,7 @@ using namespace ast;
 %define parse.error verbose
 
 // keywords
-%token SHOW TABLES CREATE TABLE DROP DESC INSERT INTO VALUES DELETE FROM ASC ORDER BY
+%token SHOW TABLES CREATE TABLE DROP DESC INSERT INTO VALUES DELETE FROM ASC ORDER BY ON
 WHERE UPDATE SET SELECT INT CHAR FLOAT INDEX AND JOIN EXIT HELP TXN_BEGIN TXN_COMMIT TXN_ABORT TXN_ROLLBACK ORDER_BY ENABLE_NESTLOOP ENABLE_SORTMERGE
 // non-keywords
 %token LEQ NEQ GEQ T_EOF
@@ -54,11 +54,13 @@ WHERE UPDATE SET SELECT INT CHAR FLOAT INDEX AND JOIN EXIT HELP TXN_BEGIN TXN_CO
 %type <sv_set_clauses> setClauses
 %type <sv_cond> condition
 /* %type <sv_conds>  */
-%type <sv_conjunction> optWhereClause optHavingClause
+%type <sv_conjunction> optWhereClause optHavingClause onClause
 %type <sv_orderby>  optOrderbyClause
 %type <sv_setKnobType> set_knob_type
 %type <sv_int> optLimitClause
-%type <sv_join> optFromClause
+%type <sv_join> optFromClause joinTree
+%type <sv_vtable> virtualTable
+%type <sv_join_type> join_type
 
 %%
 start:
@@ -189,6 +191,39 @@ delete:
     
 optFromClause:
     { $$ = nullptr; }
+    | FROM joinTree {
+        $$ = std::move($2);
+    }
+
+virtualTable:
+    tbName {
+        $$ = std::make_shared<VirtualTableNode>($1, $1);
+    }
+
+joinTree:
+    virtualTable {
+        $$ = std::make_shared<JoinNode>(std::move($1));
+    }
+    | joinTree join_type joinTree onClause {
+        $$ = std::make_shared<JoinNode>(std::move($1), std::move($3), std::move($4), $2);
+    }
+    | joinTree ',' joinTree {
+        $$ = std::make_shared<JoinNode>(std::move($1), std::move($3), nullptr, common::JoinType::CARTESIAN_PRODUCT);
+    }
+    | '(' joinTree ')' {
+        $$ = std::move($2);
+    }
+
+join_type:
+    JOIN {
+        $$ = common::JoinType::INNER_JOIN;
+    }
+
+onClause:
+    ON  {
+        $$ = nullptr;
+    }
+
 
 optGroupbyClause:
     { $$ = std::vector<std::shared_ptr<Expression>>(); }
@@ -367,7 +402,12 @@ expr:
     value {
         $$ = std::make_shared<ValueExpr>(*$1);
     }
-
+    | tbName '.' colName {
+        $$ = std::make_shared<UnboundFieldExpr>($1, $3);
+    }
+    | colName {
+        $$ = std::make_shared<UnboundFieldExpr>("", $1);
+    }
 
 
 setClauses:

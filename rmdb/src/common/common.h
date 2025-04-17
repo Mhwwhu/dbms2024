@@ -85,13 +85,19 @@ namespace common {
     };
 
     enum JoinType {
-        INNER_JOIN, LEFT_JOIN, RIGHT_JOIN, FULL_JOIN, NONE
+        INNER_JOIN, LEFT_JOIN, RIGHT_JOIN, FULL_JOIN, CARTESIAN_PRODUCT, NONE
     };
     
     enum VirtualTabType {
         TABLE,
         VIEW,
         SUBQUERY
+    };
+
+    enum VirtualFieldType {
+        TABLE_COL,
+        VIEW_COL,
+        SUBQUERY_COL
     };
 
     int compareIgnoreCase(const char* str1, const char* str2);

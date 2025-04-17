@@ -108,7 +108,7 @@ RC UnsafePrinter::write_result_internal(Context* ctx)
         return rc;
     }
 
-    return RC::INTERNAL;
+    return RC::SUCCESS;
 }
 
 RC UnsafePrinter::write_tuple_result(Context* ctx)
@@ -143,12 +143,11 @@ RC UnsafePrinter::write_tuple_result(Context* ctx)
                 oper->close();
                 return rc;
             }
-
-            rc = writer_->writen("\n", 1);
-            if(RM_FAIL(rc)) {
-                oper->close();
-                return rc;
-            }
+        }
+        rc = writer_->writen("\n", 1);
+        if(RM_FAIL(rc)) {
+            oper->close();
+            return rc;
         }
     }
 
@@ -159,7 +158,8 @@ RC UnsafePrinter::write_tuple_result(Context* ctx)
 RC UnsafePrinter::write_result(Context* ctx)
 {
     RC rc;
-    write_result_internal(ctx);
+    rc = write_result_internal(ctx);
+    if(RM_FAIL(rc)) return rc;
 
     rc = writer_->writen(send_message_delimiter_.data(), send_message_delimiter_.size());
     if(RM_FAIL(rc)) return rc;
