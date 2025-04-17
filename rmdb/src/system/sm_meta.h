@@ -42,14 +42,32 @@ static const Json::StaticString FIELD_INDEX_UNIQUE("unique");
 static const Json::StaticString FIELD_DB_NAME("name");
 static const Json::StaticString FIELD_DB_TABLES("tables");
 
+struct VirtualFieldMeta {
+    std::string alias_name;
+    AttrType attr_type;
+    int len;
+    common::VirtualFieldType type;
+
+    VirtualFieldMeta() = default;
+    VirtualFieldMeta(const std::string& name_, AttrType attr_type_, int len_, common::VirtualFieldType type_)
+    : alias_name(name_), attr_type(attr_type_), len(len_), type(type_) {}
+
+    virtual ~VirtualFieldMeta() = default;
+};
+
 /* 字段元数据 */
-struct ColMeta {
+struct ColMeta : public VirtualFieldMeta{
     std::string name;       // 字段名称
     AttrType type;           // 字段类型
     int len;                // 字段长度
     int offset;             // 字段位于记录中的偏移量
     int id;
-    bool nullable;             /** unused */
+    bool nullable;
+
+    ColMeta() = default;
+    ColMeta(const std::string& name_, AttrType type_, int len_, int offset_, int id_, bool nullable_)
+    : VirtualFieldMeta(name_, type_, len_, common::VirtualFieldType::TABLE_COL),
+     name(name_), type(type_), len(len_), offset(offset_), id(id_), nullable(nullable_) {}
 
     Json::Value to_json() 
     {
@@ -105,6 +123,11 @@ struct ColMeta {
         id = col_id_value.asInt();
         nullable = nullable_value.asBool();
 
+        VirtualFieldMeta::alias_name = name;
+        VirtualFieldMeta::attr_type = type;
+        VirtualFieldMeta::type = common::VirtualFieldType::TABLE_COL;
+        VirtualFieldMeta::len = len;
+
         return RC::SUCCESS;
     }
 };
@@ -155,11 +178,20 @@ struct IndexMeta {
 
 struct VirtualTabMeta {
     std::string alias_name;
+    std::vector<std::shared_ptr<VirtualFieldMeta>> vcols;
     common::VirtualTabType type;
 
     VirtualTabMeta(std::string alias, common::VirtualTabType type): alias_name(alias), type(type) {}
     VirtualTabMeta() = default;
     virtual ~VirtualTabMeta() = default;
+
+    std::shared_ptr<VirtualFieldMeta> get_vfield(const std::string& name) 
+    {
+        for(auto vcol : vcols) {
+            if(vcol->alias_name == name) return vcol;
+        }
+        return nullptr;
+    }
 };
 
 /* 表元数据 */
@@ -168,7 +200,7 @@ struct TabMeta : public VirtualTabMeta{
     std::vector<ColMeta> cols;          // 表包含的字段
     std::vector<IndexMeta> indexes;     // 表上建立的索引
 
-    TabMeta(): VirtualTabMeta(name, common::VirtualTabType::TABLE){}
+    TabMeta(): VirtualTabMeta() {}
 
     /* 判断当前表中是否存在名为col_name的字段 */
     bool is_col(const std::string &col_name) const {
@@ -265,6 +297,9 @@ struct TabMeta : public VirtualTabMeta{
 
         name = name_value.asCString();
         VirtualTabMeta::alias_name = name;
+        for(auto col : cols) {
+            VirtualTabMeta::vcols.push_back(std::make_shared<ColMeta>(col));
+        }
 
         return RC::SUCCESS;
     }

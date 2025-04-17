@@ -82,6 +82,6 @@ RC OperatorGenerator::create_operator(std::shared_ptr<TableScanPlan> plan, std::
     // table scan不允许有子节点
     if(!plan->children().empty()) return RC::INTERNAL;
 
-    oper = make_shared<TableScanOper>(plan->table_meta(), plan->filter());
+    oper = make_shared<TableScanOper>(plan->table_meta(), plan->alias_name(), plan->filter());
     return RC::SUCCESS;
 }

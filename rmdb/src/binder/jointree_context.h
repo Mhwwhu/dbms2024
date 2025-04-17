@@ -13,7 +13,7 @@ public:
     JointreeContext(std::shared_ptr<VirtualTabMeta> vtable, std::shared_ptr<BinderContext> outer)
     : outer_context_(outer), is_leaf_(true) 
     {
-        vtables_.insert(vtable);
+        vtables_.push_back(vtable);
     }
 
     RC set_children(std::shared_ptr<JointreeContext> left, std::shared_ptr<JointreeContext> right)
@@ -22,9 +22,11 @@ public:
         right_context_ = right;
 
         vtables_ = left->vtables_;
-        for(auto vtable : right->vtables_) {
-            if(vtables_.count(vtable) != 0) return RC::DUPLICATE_ALIAS_NAME;
-            vtables_.insert(vtable);
+        for(auto r_vtable : right->vtables_) {
+            for(auto l_vtable : vtables_) {
+                if(l_vtable->alias_name == r_vtable->alias_name) return RC::DUPLICATE_ALIAS_NAME;
+            }
+            vtables_.push_back(r_vtable);
         }
         is_leaf_ = false;
         return RC::SUCCESS;
@@ -33,7 +35,7 @@ public:
     RC set_vtable(std::shared_ptr<VirtualTabMeta> vtable)
     {
         if(!vtables_.empty()) return RC::INTERNAL;
-        vtables_.insert(vtable);
+        vtables_.push_back(vtable);
         is_leaf_ = true;
         return RC::SUCCESS;
     }
@@ -41,13 +43,13 @@ public:
     std::shared_ptr<const BinderContext> outer_context() const { return outer_context_; }
     std::shared_ptr<const JointreeContext> left_child() const { return left_context_; }
     std::shared_ptr<const JointreeContext> right_child() const { return right_context_; }
-    const std::set<std::shared_ptr<VirtualTabMeta>, VTableMetaComparator>& vtables() const { return vtables_; }
+    const std::vector<std::shared_ptr<VirtualTabMeta>>& vtables() const { return vtables_; }
     bool is_leaf() const { return is_leaf_; }
 
 private:
     std::shared_ptr<const BinderContext> outer_context_;
     std::shared_ptr<const JointreeContext> left_context_;
     std::shared_ptr<const JointreeContext> right_context_;
-    std::set<std::shared_ptr<VirtualTabMeta>, VTableMetaComparator> vtables_;
+    std::vector<std::shared_ptr<VirtualTabMeta>> vtables_;
     bool is_leaf_;
 };

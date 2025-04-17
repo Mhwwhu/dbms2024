@@ -11,7 +11,7 @@ class RmRecord;
 
 class RowTuple : public ITuple {
 public:
-    RowTuple(const TabMeta& table_meta) : table_meta_(table_meta) {}
+    RowTuple(const TabMeta& table_meta, const std::string& alias_name) : table_meta_(table_meta), alias_name_(alias_name) {}
     ~RowTuple() override = default;
 
     int cell_num() const override { return static_cast<int>(table_meta_.cols.size()); }
@@ -30,4 +30,5 @@ public:
 private:
     std::shared_ptr<RmRecord> record_;
     TabMeta table_meta_;
+    std::string alias_name_;
 };

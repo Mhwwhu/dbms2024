@@ -8,7 +8,8 @@ class ConjunctionExpr;
 
 class TableScanPlan : public Plan {
 public:
-    TableScanPlan(const TabMeta& table, std::shared_ptr<ConjunctionExpr> filter) : table_(table), filter_(filter) {}
+    TableScanPlan(const TabMeta& table, const std::string& alias_name, std::shared_ptr<ConjunctionExpr> filter)
+     : table_(table), alias_name_(alias_name), filter_(filter) {}
 
     PlanTag type() const { return PlanTag::TABLE_SCAN_PLAN; }
 
@@ -18,7 +19,10 @@ public:
 
     const TabMeta& table_meta() const { return table_; }
 
+    const std::string& alias_name() const { return alias_name_; }
+
 private:
     TabMeta table_;
+    std::string alias_name_;
     std::shared_ptr<ConjunctionExpr> filter_;
 };

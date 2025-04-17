@@ -94,6 +94,12 @@ namespace common {
         SUBQUERY
     };
 
+    enum VirtualFieldType {
+        TABLE_COL,
+        VIEW_COL,
+        SUBQUERY_COL
+    };
+
     int compareIgnoreCase(const char* str1, const char* str2);
 
     int compare_string(void *arg1, int arg1_max_length, void *arg2, int arg2_max_length);

@@ -17,7 +17,7 @@ public:
 
     std::string name() const override { return field_name_; }
 
-    std::string table_name() const { return table_name_; }
+    std::string alias_table_name() const { return table_name_; }
     std::string field_name() const { return field_name_; }
 
 private:

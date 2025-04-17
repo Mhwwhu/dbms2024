@@ -28,14 +28,14 @@ RC RowTuple::cell_at(int index, Value& cell) const
 RC RowTuple::spec_at(int index, ITupleCellSpec& spec) const
 {
     if(index < 0 || index >= cell_num()) return RC::INVALID_ARGUMENT;
-    spec = RowTupleCellSpec(table_meta_.name, table_meta_.cols[index].name);
+    spec = RowTupleCellSpec(alias_name_, table_meta_.cols[index].name);
     return RC::SUCCESS;
 }
 
 RC RowTuple::find_cell(const ITupleCellSpec& spec, Value& cell) const
 {
     if(auto row_spec = dynamic_cast<const RowTupleCellSpec*>(&spec)) {
-        if(row_spec->table_name() != table_meta_.name) return RC::NOTFOUND;
+        if(row_spec->alias_table_name() != alias_name_) return RC::NOTFOUND;
         string field_name = row_spec->field_name();
         ColMeta col;
         RC rc = table_meta_.get_col(field_name, col);

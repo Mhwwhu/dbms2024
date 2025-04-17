@@ -6,7 +6,8 @@
 
 using namespace std;
 
-TableScanOper::TableScanOper(const TabMeta& table, std::shared_ptr<ConjunctionExpr> filter): table_(table), filter_(filter)
+TableScanOper::TableScanOper(const TabMeta& table, const std::string& alias_name, std::shared_ptr<ConjunctionExpr> filter)
+: table_(table), alias_name_(alias_name), filter_(filter)
 {
     tuple_schema_ = make_shared<TupleSchema>();
     for(auto col : table.cols) {
@@ -18,9 +19,9 @@ RC TableScanOper::open(Context* ctx)
 {
     auto file_handler = ctx->sm_manager_->fhs_[table_.name].get();
     scanner_ = make_unique<RecScan>(file_handler, filter_);
+    tuple_ = make_shared<RowTuple>(table_, alias_name_);
 
-    RC rc = scanner_->open(ctx);
-    if(RM_FAIL(rc)) return rc;
+    return scanner_->open(ctx);
 }
 
 RC TableScanOper::next() 
@@ -59,6 +60,10 @@ std::shared_ptr<TupleSchema> TableScanOper::tuple_schema() const
 RC TableScanOper::filter(std::shared_ptr<RowTuple> tuple, bool& result)
 {
     RC rc = RC::SUCCESS;
+    if(!filter_) {
+        result = true;
+        return rc;
+    }
     Value val;
     rc = filter_->get_value(*tuple, val);
     if(RM_FAIL(rc)) return rc;

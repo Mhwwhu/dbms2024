@@ -10,7 +10,7 @@ class RowTuple;
 
 class TableScanOper : public Operator {
 public:
-    TableScanOper(const TabMeta& table, std::shared_ptr<ConjunctionExpr> filter);
+    TableScanOper(const TabMeta& table, const std::string& alias_name, std::shared_ptr<ConjunctionExpr> filter);
 
     OperatorType type() const override { return OperatorType::TABLE_SCAN_OPER; }
 
@@ -28,11 +28,14 @@ public:
 
     const TabMeta& table_meta() const { return table_; }
 
+    const std::string& alias_name() const { return alias_name_; }
+
 private:
     RC filter(std::shared_ptr<RowTuple> tuple, bool& result);
 
 private:
     TabMeta table_;
+    std::string alias_name_;
     std::shared_ptr<ConjunctionExpr> filter_;
     std::unique_ptr<RecScan> scanner_;
     std::shared_ptr<RowTuple> tuple_;
