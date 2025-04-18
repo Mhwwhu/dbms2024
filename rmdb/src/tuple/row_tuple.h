@@ -16,9 +16,9 @@ public:
 
     int cell_num() const override { return static_cast<int>(table_meta_.cols.size()); }
 
-    RC cell_at(int index, Value& cell) const;
+    RC cell_at(int index, Value& cell) const override;
 
-    RC spec_at(int index, ITupleCellSpec& spec) const override;
+    RC spec_at(int index, std::shared_ptr<ITupleCellSpec>& spec) const override;
 
     RC find_cell(const ITupleCellSpec& spec, Value& cell) const override;
 

@@ -18,7 +18,7 @@ See the Mulan PSL v2 for more details. */
 #include "project_plan.h"
 #include "table_scan_plan.h"
 #include "delete_plan.h"
-#include "fliter_plan.h"
+#include "filter_plan.h"
 
 using namespace std;
 using namespace common;
@@ -415,13 +415,17 @@ RC Planner::do_planner(std::shared_ptr<IStmt> stmt, Context* context, std::share
 RC Planner::create_plan(std::shared_ptr<DeleteStmt> stmt ,std::shared_ptr<Plan>&plan){
     RC rc = RC::SUCCESS;
     shared_ptr<Plan> last_plan = nullptr;
+
+    last_plan = make_shared<TableScanPlan>(stmt->table_meta(), stmt->table_meta().name, nullptr);
+
     if(stmt->where_clause()) {
-
-       // rc = create_plan(std::static_pointer_cast<FilterClause>(stmt->where_clause()),last_plan);
-
+        auto filter_plan = make_shared<FilterPlan>(stmt->where_clause()->expr());
+        filter_plan->add_child(last_plan);
+        last_plan = filter_plan;
     }
-         plan = std::make_shared<DeletePlan>(stmt->table_meta());
 
+    plan = std::make_shared<DeletePlan>(stmt->table_meta());
+    plan->add_child(last_plan);
 
     return rc;
 }
@@ -449,6 +453,15 @@ RC Planner::create_plan(std::shared_ptr<SelectStmt> stmt, std::shared_ptr<Plan>&
                 return RC::UNIMPLEMENTED;
             }
         }
+    }
+
+    // 构建where的filter plan
+    if(stmt->where_clause()) {
+        auto filter_plan = make_shared<FilterPlan>(stmt->where_clause()->expr());
+        if(last_plan) {
+            filter_plan->add_child(last_plan);
+        }
+        last_plan = filter_plan;
     }
 
     auto project_plan = make_shared<ProjectPlan>(stmt->project_exprs());

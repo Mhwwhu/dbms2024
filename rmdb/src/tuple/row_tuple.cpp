@@ -25,10 +25,10 @@ RC RowTuple::cell_at(int index, Value& cell) const
     return RC::SUCCESS;
 }
 
-RC RowTuple::spec_at(int index, ITupleCellSpec& spec) const
+RC RowTuple::spec_at(int index, std::shared_ptr<ITupleCellSpec>& spec) const
 {
     if(index < 0 || index >= cell_num()) return RC::INVALID_ARGUMENT;
-    spec = RowTupleCellSpec(alias_name_, table_meta_.cols[index].name);
+    spec = make_shared<RowTupleCellSpec>(alias_name_, table_meta_.cols[index].name);
     return RC::SUCCESS;
 }
 

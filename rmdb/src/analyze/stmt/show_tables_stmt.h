@@ -7,11 +7,11 @@
 using namespace std;
 
 class ShowTablesStmt: public IStmt {
-    public:
-        ShowTablesStmt() = default;
-    
-        StmtType type() const override { return StmtType::SHOW_TABLES_STMT; }
-    
-        static RC create(std::shared_ptr<ast::ShowTables> node, std::shared_ptr<IStmt>& stmt);
-    
-    };
+public:
+    ShowTablesStmt() = default;
+
+    StmtType type() const override { return StmtType::SHOW_TABLES_STMT; }
+
+    static RC create(std::shared_ptr<ast::ShowTables> node, std::shared_ptr<IStmt>& stmt);
+
+};

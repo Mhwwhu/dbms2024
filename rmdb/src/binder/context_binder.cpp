@@ -2,6 +2,8 @@
 #include "binder_context.h"
 #include "expression/unbound_field_expr.h"
 #include "expression/field_expr.h"
+#include "expression/comparison_expr.h"
+#include "expression/conjunction_expr.h"
 
 using namespace std;
 
@@ -16,6 +18,12 @@ RC ContextBinder::bind_expression(std::shared_ptr<Expression> expr, std::vector<
     }
     case ExprType::VALUE: {
         return bind_value_expr(expr, bound_exprs);
+    }
+    case ExprType::COMPARISON: {
+        return bind_comp_expr(expr, bound_exprs);
+    }
+    case ExprType::CONJUNCTION: {
+        return bind_conjunction_expr(expr, bound_exprs);
     }
 
     default: {
@@ -77,5 +85,36 @@ RC ContextBinder::bind_value_expr(std::shared_ptr<Expression> expr, std::vector<
 
 RC ContextBinder::bind_conjunction_expr(std::shared_ptr<Expression> expr, std::vector<std::shared_ptr<Expression>>& bound_exprs)
 {
-    
+    if(expr == nullptr) return RC::INVALID_ARGUMENT;
+
+    auto conj_expr = static_pointer_cast<ConjunctionExpr>(expr);
+    std::vector<std::shared_ptr<Expression>> bound_conj_exprs;
+    RC rc = bind_expression(conj_expr->left(), bound_conj_exprs);
+    if(RM_FAIL(rc)) return rc;
+    rc = bind_expression(conj_expr->right(), bound_conj_exprs);
+    if(RM_FAIL(rc)) return rc;
+    auto left = bound_conj_exprs[0];
+    auto right = bound_conj_exprs[1];
+    auto new_conj_expr = make_shared<ConjunctionExpr>(left, right, conj_expr->conj_type());
+    new_conj_expr->set_name(conj_expr->name());
+    bound_exprs.push_back(new_conj_expr);
+    return RC::SUCCESS;
+}
+
+RC ContextBinder::bind_comp_expr(std::shared_ptr<Expression> expr, std::vector<std::shared_ptr<Expression>>& bound_exprs)
+{
+    if(expr == nullptr) return RC::INVALID_ARGUMENT;
+
+    std::vector<std::shared_ptr<Expression>> bound_comp_exprs;
+    auto comp_expr = static_pointer_cast<ComparisonExpr>(expr);
+    RC rc = bind_expression(comp_expr->left(), bound_comp_exprs);
+    if(RM_FAIL(rc)) return rc;
+    rc = bind_expression(comp_expr->right(), bound_comp_exprs);
+    if(RM_FAIL(rc)) return rc;
+    auto left = bound_comp_exprs[0];
+    auto right = bound_comp_exprs[1];
+    auto new_comp_expr = make_shared<ComparisonExpr>(left, right, comp_expr->op());
+    new_comp_expr->set_name(comp_expr->name());
+    bound_exprs.push_back(new_comp_expr);
+    return RC::SUCCESS;
 }

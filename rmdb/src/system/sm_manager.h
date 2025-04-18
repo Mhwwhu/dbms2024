@@ -62,7 +62,7 @@ class SmManager {
 
     RC flush_meta();
 
-    void show_tables(Context* context);
+    std::vector<TabMeta> tables() const;
 
     void desc_table(const std::string& tab_name, Context* context);
 

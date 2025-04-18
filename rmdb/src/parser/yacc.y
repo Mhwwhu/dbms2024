@@ -4,6 +4,8 @@
 #include "expression/expression.h"
 #include "expression/value_expr.h"
 #include "expression/unbound_field_expr.h"
+#include "expression/comparison_expr.h"
+#include "expression/conjunction_expr.h"
 #include <iostream>
 #include <memory>
 
@@ -25,7 +27,7 @@ using namespace ast;
 
 // keywords
 %token SHOW TABLES CREATE TABLE DROP DESC INSERT INTO VALUES DELETE FROM ASC ORDER BY ON
-WHERE UPDATE SET SELECT INT CHAR FLOAT INDEX AND JOIN EXIT HELP TXN_BEGIN TXN_COMMIT TXN_ABORT TXN_ROLLBACK ORDER_BY ENABLE_NESTLOOP ENABLE_SORTMERGE
+WHERE UPDATE SET SELECT INT CHAR FLOAT INDEX AND OR JOIN EXIT HELP TXN_BEGIN TXN_COMMIT TXN_ABORT TXN_ROLLBACK ORDER_BY ENABLE_NESTLOOP ENABLE_SORTMERGE
 // non-keywords
 %token LEQ NEQ GEQ T_EOF
 
@@ -40,8 +42,8 @@ WHERE UPDATE SET SELECT INT CHAR FLOAT INDEX AND JOIN EXIT HELP TXN_BEGIN TXN_CO
 %type <sv_field> field
 %type <sv_fields> fieldList
 %type <sv_type_len> type
-%type <sv_comp_op> op
-%type <sv_expr> expr
+%type <sv_comp_op> compOp
+%type <sv_expr> expr valueExpr unboundFieldExpr compExpr conjunctionExpr optWhereClause optHavingClause onClause 
 %type <sv_exprs> exprList optGroupbyClause
 %type <sv_expr_chunk> insertList
 %type <sv_val> value
@@ -54,7 +56,6 @@ WHERE UPDATE SET SELECT INT CHAR FLOAT INDEX AND JOIN EXIT HELP TXN_BEGIN TXN_CO
 %type <sv_set_clauses> setClauses
 %type <sv_cond> condition
 /* %type <sv_conds>  */
-%type <sv_conjunction> optWhereClause optHavingClause onClause
 %type <sv_orderby>  optOrderbyClause
 %type <sv_setKnobType> set_knob_type
 %type <sv_int> optLimitClause
@@ -233,6 +234,9 @@ optHavingClause:
 
 optWhereClause:
     { $$ = nullptr; }
+    | WHERE conjunctionExpr {
+        $$ = std::move($2);
+    }
 
 optOrderbyClause:
     { $$ = nullptr; }
@@ -379,13 +383,13 @@ colList:
     }
     ;
 
-op:
-    '=' { $$ = EQ; }
-    | '<' { $$ = LT; }
-    | '>' { $$ = GT; }
-    | NEQ { $$ = NE; }
-    | LEQ { $$ = LE; }
-    | GEQ { $$ = GE; }
+compOp:
+    '=' { $$ = common::CompOp::EQ; }
+    | '<' { $$ = common::CompOp::LT; }
+    | '>' { $$ = common::CompOp::GT; }
+    | NEQ { $$ = common::CompOp::NE; }
+    | LEQ { $$ = common::CompOp::LE; }
+    | GEQ { $$ = common::CompOp::GE; }
     ;
 
 exprList:
@@ -399,16 +403,47 @@ exprList:
     }
 
 expr:
+    '(' expr ')' {
+        $$ = std::move($2);
+    } 
+    | valueExpr {
+        $$ = std::move($1);
+    }
+    | unboundFieldExpr {
+        $$ = std::move($1);
+    }
+    | compExpr {
+        $$ = std::move($1);
+    }
+
+valueExpr:
     value {
         $$ = std::make_shared<ValueExpr>(*$1);
     }
-    | tbName '.' colName {
+
+unboundFieldExpr:
+    tbName '.' colName {
         $$ = std::make_shared<UnboundFieldExpr>($1, $3);
     }
     | colName {
         $$ = std::make_shared<UnboundFieldExpr>("", $1);
     }
 
+compExpr:
+    expr compOp expr {
+        $$ = std::make_shared<ComparisonExpr>(std::move($1), std::move($3), $2);
+    }
+
+conjunctionExpr:
+    expr {
+        $$ = std::move($1);
+    }
+    | expr AND expr {
+        $$ = std::make_shared<ConjunctionExpr>(std::move($1), std::move($3), common::ConjunctionType::AND);
+    }
+    | expr OR expr {
+        $$ = std::make_shared<ConjunctionExpr>(std::move($1), std::move($3), common::ConjunctionType::OR);
+    }
 
 setClauses:
         setClause

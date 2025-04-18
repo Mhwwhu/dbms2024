@@ -9,5 +9,4 @@ public:
     ShowTablesExecutor() = default;
     ~ShowTablesExecutor() = default;
     RC execute(Context* context);
-
 };

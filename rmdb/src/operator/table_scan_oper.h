@@ -4,13 +4,13 @@
 #include "system/sm_meta.h"
 #include "record/rm_scan.h"
 
-class ConjunctionExpr;
+class Expression;
 class RecScan;
 class RowTuple;
 
 class TableScanOper : public Operator {
 public:
-    TableScanOper(const TabMeta& table, const std::string& alias_name, std::shared_ptr<ConjunctionExpr> filter);
+    TableScanOper(const TabMeta& table, const std::string& alias_name, std::shared_ptr<Expression> filter);
 
     OperatorType type() const override { return OperatorType::TABLE_SCAN_OPER; }
 
@@ -36,7 +36,7 @@ private:
 private:
     TabMeta table_;
     std::string alias_name_;
-    std::shared_ptr<ConjunctionExpr> filter_;
+    std::shared_ptr<Expression> filter_;
     std::unique_ptr<RecScan> scanner_;
     std::shared_ptr<RowTuple> tuple_;
     std::shared_ptr<TupleSchema> tuple_schema_;

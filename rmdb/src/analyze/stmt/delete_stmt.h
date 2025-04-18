@@ -19,11 +19,7 @@ public:
 
     const std::shared_ptr<FilterClause>& where_clause() const { return where_clause_; }
     static RC create(SmManager* sm_manager, std::shared_ptr<ast::DeleteNode> delete_node, std::shared_ptr<IStmt>& stmt);
-
-
-
 private:
     TabMeta table_meta_;
     std::shared_ptr<FilterClause> where_clause_ = nullptr;
-
 };

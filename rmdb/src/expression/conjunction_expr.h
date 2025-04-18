@@ -20,6 +20,10 @@ public:
 
     RC try_get_value(Value& val) const override;
 
+    std::shared_ptr<Expression> left() const { return left_; }
+    std::shared_ptr<Expression> right() const { return right_; }
+    common::ConjunctionType conj_type() const { return type_; }
+
 private:
     std::shared_ptr<Expression> left_;
     std::shared_ptr<Expression> right_;

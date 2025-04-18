@@ -6,7 +6,7 @@
 
 using namespace std;
 
-TableScanOper::TableScanOper(const TabMeta& table, const std::string& alias_name, std::shared_ptr<ConjunctionExpr> filter)
+TableScanOper::TableScanOper(const TabMeta& table, const std::string& alias_name, std::shared_ptr<Expression> filter)
 : table_(table), alias_name_(alias_name), filter_(filter)
 {
     tuple_schema_ = make_shared<TupleSchema>();

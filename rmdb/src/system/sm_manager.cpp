@@ -129,21 +129,12 @@ RC SmManager::close_db() {
  * @description: 显示所有的表,通过测试需要将其结果写入到output.txt,详情看题目文档
  * @param {Context*} context 
  */
-void SmManager::show_tables(Context* context) {
-    std::fstream outfile;
-    outfile.open("output.txt", std::ios::out | std::ios::app);
-    outfile << "| Tables |\n";
-    RecordPrinter printer(1);
-    printer.print_separator(context);
-    printer.print_record({"Tables"}, context);
-    printer.print_separator(context);
-    for (auto &entry : db_.tabs_) {
-        auto &tab = entry.second;
-        printer.print_record({tab.name}, context);
-        outfile << "| " << tab.name << " |\n";
+std::vector<TabMeta> SmManager::tables() const {
+    std::vector<TabMeta> tables;
+    for (auto &pair : db_.tabs_) {
+        tables.push_back(pair.second);
     }
-    printer.print_separator(context);
-    outfile.close();
+    return tables;
 }
 
 /**

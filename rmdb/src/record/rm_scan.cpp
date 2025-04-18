@@ -15,7 +15,7 @@ See the Mulan PSL v2 for more details. */
  * @brief 初始化file_handle和rid
  * @param file_handle
  */
-RecScan::RecScan(const RmFileHandle *file_handle, std::shared_ptr<ConjunctionExpr> filter)
+RecScan::RecScan(const RmFileHandle *file_handle, std::shared_ptr<Expression> filter)
  : file_handle_(file_handle), filter_(filter) {}
 
 RC RecScan::open(Context* ctx) {

@@ -20,6 +20,9 @@ public:
 
     RC try_get_value(Value& val) const override;
 
+    std::shared_ptr<Expression> left() const { return left_; }
+    std::shared_ptr<Expression> right() const { return right_; }
+    common::CompOp op() const { return op_; }
 
 private:
     std::shared_ptr<Expression> left_;

@@ -111,32 +111,6 @@ struct SetClause : public TreeNode {
             col_name(std::move(col_name_)), val(std::move(val_)) {}
 };
 
-struct ConditionNode : public TreeNode {
-    virtual ~ConditionNode() = default;
-};
-
-struct CompareNode : public ConditionNode {
-    std::shared_ptr<Expression> left;
-    std::shared_ptr<Expression> right;
-    common::CompOp comp;
-
-    CompareNode(std::shared_ptr<Expression> left_, std::shared_ptr<Expression> right_, common::CompOp comp_)
-    : left(left_), right(right_), comp(comp_) {}
-};
-
-struct ConjunctionNode : public TreeNode {
-    std::shared_ptr<ConjunctionNode> left;
-    std::shared_ptr<ConjunctionNode> right;
-    std::shared_ptr<ConditionNode> condition;
-    common::ConjunctionType type;
-
-    ConjunctionNode(std::shared_ptr<ConditionNode> condition_)
-    : condition(condition), type(common::ConjunctionType::NONE) {}
-
-    ConjunctionNode(std::shared_ptr<ConjunctionNode> left_, std::shared_ptr<ConjunctionNode> right_, common::ConjunctionType type_)
-    : left(left_), right(right_), type(type_) {}
-};
-
 struct OrderByUnitNode : public TreeNode {
     std::shared_ptr<Expression> expr;
     common::OrderByDir direction;
@@ -165,16 +139,16 @@ struct SelectNode : public TreeNode {
     std::vector<std::shared_ptr<Expression>> project;
     std::shared_ptr<JoinNode> join_tree;
     std::vector<std::shared_ptr<Expression>> group_by;
-    std::shared_ptr<ConjunctionNode> having_conj;
-    std::shared_ptr<ConjunctionNode> where_conj;
+    std::shared_ptr<Expression> having_conj;
+    std::shared_ptr<Expression> where_conj;
     std::shared_ptr<OrderByNode> orderby;
     int limit = -1;
 
     SelectNode( const std::vector<std::shared_ptr<Expression>>& project_,
                 std::shared_ptr<JoinNode> join_tree_,
                 const std::vector<std::shared_ptr<Expression>>& group_by_,
-                std::shared_ptr<ConjunctionNode> having_conj_,
-                std::shared_ptr<ConjunctionNode> where_conj_,
+                std::shared_ptr<Expression> having_conj_,
+                std::shared_ptr<Expression> where_conj_,
                 std::shared_ptr<OrderByNode> orderby_,
                 int limit_)
                 : project(std::move(project_)), join_tree(std::move(join_tree_)), group_by(std::move(group_by_)),
@@ -198,12 +172,12 @@ struct VirtualTableNode : public TreeNode {
 struct JoinNode : public TreeNode {
     std::shared_ptr<JoinNode> left;
     std::shared_ptr<JoinNode> right;
-    std::shared_ptr<ConjunctionNode> conjunction;
+    std::shared_ptr<Expression> conjunction;
     std::shared_ptr<VirtualTableNode> vtable;
     common::JoinType type;
 
     JoinNode(std::shared_ptr<JoinNode> left_, std::shared_ptr<JoinNode> right_,
-            std::shared_ptr<ConjunctionNode> conjunction_, common::JoinType type_) :
+            std::shared_ptr<Expression> conjunction_, common::JoinType type_) :
             left(left_), right(right_), conjunction(conjunction_), type(type_) {}
 
     JoinNode(std::shared_ptr<VirtualTableNode> vtable_) : vtable(vtable_), type(common::JoinType::NONE) {}
@@ -211,12 +185,11 @@ struct JoinNode : public TreeNode {
 
 struct DeleteNode : public TreeNode {
     std::string tab_name;
+    std::shared_ptr<Expression> where_conj;
 
-    std::shared_ptr<ConjunctionNode> where_conj;
-
-    DeleteNode(std::string tab_name_, std::shared_ptr<ConjunctionNode> where_conj_) :
+    DeleteNode(std::string tab_name_, std::shared_ptr<Expression> where_conj_) :
             tab_name(std::move(tab_name_)), where_conj(std::move(where_conj_)) {}
-}
+};
 // struct SelectNode : public TreeNode {
 //     std::vector<std::shared_ptr<Col>> cols;
 //     std::vector<std::string> tabs;
@@ -278,15 +251,6 @@ struct SemValue {
 
     std::shared_ptr<SetClause> sv_set_clause;
     std::vector<std::shared_ptr<SetClause>> sv_set_clauses;
-
-    std::shared_ptr<ConjunctionNode> sv_conjunction;
-    std::vector<std::shared_ptr<ConjunctionNode>> sv_conjunctions;
-
-    std::shared_ptr<ConditionNode> sv_cond;
-    std::vector<std::shared_ptr<ConditionNode>> sv_conds;
-
-    std::shared_ptr<CompareNode> sv_compare;
-    std::vector<std::shared_ptr<CompareNode>> sv_compares;
 
     std::shared_ptr<OrderByNode> sv_orderby;
 

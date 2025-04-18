@@ -1,6 +1,6 @@
-#line 2 "/home/xirro/dbms2024/rmdb/src/parser/lex.yy.cpp"
+#line 2 "/home/mhwwhu/db2024/rmdb/src/parser/lex.yy.cpp"
 
-#line 4 "/home/xirro/dbms2024/rmdb/src/parser/lex.yy.cpp"
+#line 4 "/home/mhwwhu/db2024/rmdb/src/parser/lex.yy.cpp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -379,8 +379,8 @@ static void yynoreturn yy_fatal_error ( const char* msg  );
 	(yy_hold_char) = *yy_cp; \
 	*yy_cp = '\0'; \
 	(yy_c_buf_p) = yy_cp;
-#define YY_NUM_RULES 52
-#define YY_END_OF_BUFFER 53
+#define YY_NUM_RULES 53
+#define YY_END_OF_BUFFER 54
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -390,26 +390,26 @@ struct yy_trans_info
 	};
 static const flex_int16_t yy_accept[185] =
     {   0,
-        0,    0,    0,    0,   53,   51,    6,    7,    7,   51,
-       46,   51,   51,   51,   48,   46,   46,   47,   47,   47,
-       47,   47,   47,   47,   47,   47,   47,   47,   47,   47,
-       47,   47,   47,   47,    3,    4,    6,    7,    0,   50,
-       48,    5,    1,   49,   44,   45,   43,   47,   47,   47,
-       47,   47,   37,   47,   47,   47,   47,   47,   47,   47,
-       47,   47,   47,   47,   47,   47,   24,   47,   47,   47,
-       47,   47,   47,   47,   47,   47,    2,    5,   49,   47,
-       32,   38,   47,   47,   47,   47,   47,   47,   47,   47,
-       47,   47,   47,   47,   47,   47,   47,   28,   47,   47,
+        0,    0,    0,    0,   54,   52,    6,    7,    7,   52,
+       47,   52,   52,   52,   49,   47,   47,   48,   48,   48,
+       48,   48,   48,   48,   48,   48,   48,   48,   48,   48,
+       48,   48,   48,   48,    3,    4,    6,    7,    0,   51,
+       49,    5,    1,   50,   45,   46,   44,   48,   48,   48,
+       48,   48,   38,   48,   48,   48,   48,   48,   48,   48,
+       48,   48,   48,   48,   48,   48,   24,   33,   48,   48,
+       48,   48,   48,   48,   48,   48,    2,    5,   50,   48,
+       32,   39,   48,   48,   48,   48,   48,   48,   48,   48,
+       48,   48,   48,   48,   48,   48,   48,   28,   48,   48,
 
-       47,   47,   26,   47,   47,   47,   47,   47,   47,   47,
-       47,   29,   47,   47,   47,   17,   16,   47,   34,   47,
-       47,   22,   35,   47,   47,   19,   33,   47,   47,   47,
-        8,   47,   41,   47,   47,   47,   11,    9,   47,   47,
-       47,   47,   42,   30,   31,   47,   36,   47,   47,   15,
-       47,   47,   23,   10,   14,   21,   47,   18,   47,   27,
-       13,   25,   20,   47,   47,   47,   47,   12,   47,   47,
-       47,   47,   47,   47,   47,   47,   47,   47,   47,   47,
-       39,   47,   40,    0
+       48,   48,   26,   48,   48,   48,   48,   48,   48,   48,
+       48,   29,   48,   48,   48,   17,   16,   48,   35,   48,
+       48,   22,   36,   48,   48,   19,   34,   48,   48,   48,
+        8,   48,   42,   48,   48,   48,   11,    9,   48,   48,
+       48,   48,   43,   30,   31,   48,   37,   48,   48,   15,
+       48,   48,   23,   10,   14,   21,   48,   18,   48,   27,
+       13,   25,   20,   48,   48,   48,   48,   12,   48,   48,
+       48,   48,   48,   48,   48,   48,   48,   48,   48,   48,
+       40,   48,   41,    0
     } ;
 
 static const YY_CHAR yy_ec[256] =
@@ -646,9 +646,9 @@ char *yytext;
         } \
     }
 
-#line 650 "/home/xirro/dbms2024/rmdb/src/parser/lex.yy.cpp"
+#line 650 "/home/mhwwhu/db2024/rmdb/src/parser/lex.yy.cpp"
 
-#line 652 "/home/xirro/dbms2024/rmdb/src/parser/lex.yy.cpp"
+#line 652 "/home/mhwwhu/db2024/rmdb/src/parser/lex.yy.cpp"
 
 #define INITIAL 0
 #define STATE_COMMENT 1
@@ -886,7 +886,7 @@ YY_DECL
 
 #line 48 "lex.l"
     /* block comment */
-#line 890 "/home/xirro/dbms2024/rmdb/src/parser/lex.yy.cpp"
+#line 890 "/home/mhwwhu/db2024/rmdb/src/parser/lex.yy.cpp"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1111,110 +1111,115 @@ YY_RULE_SETUP
 case 33:
 YY_RULE_SETUP
 #line 84 "lex.l"
-{return JOIN;}
+{ return OR; }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
 #line 85 "lex.l"
-{ return EXIT; }
+{return JOIN;}
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
 #line 86 "lex.l"
-{ return HELP; }
+{ return EXIT; }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
 #line 87 "lex.l"
-{ return ORDER; }
+{ return HELP; }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
 #line 88 "lex.l"
-{  return BY;  }
+{ return ORDER; }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
 #line 89 "lex.l"
-{ return ASC; }
+{  return BY;  }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
 #line 90 "lex.l"
-{ return ENABLE_NESTLOOP; }
+{ return ASC; }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
 #line 91 "lex.l"
-{ return ENABLE_SORTMERGE; }
+{ return ENABLE_NESTLOOP; }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
 #line 92 "lex.l"
+{ return ENABLE_SORTMERGE; }
+	YY_BREAK
+case 42:
+YY_RULE_SETUP
+#line 93 "lex.l"
 { 
     yylval->sv_bool = true;
     return VALUE_BOOL; 
 }
 	YY_BREAK
-case 42:
+case 43:
 YY_RULE_SETUP
-#line 96 "lex.l"
+#line 97 "lex.l"
 {
     yylval->sv_bool = false;
     return VALUE_BOOL;
 }
 	YY_BREAK
 /* operators */
-case 43:
-YY_RULE_SETUP
-#line 101 "lex.l"
-{ return GEQ; }
-	YY_BREAK
 case 44:
 YY_RULE_SETUP
 #line 102 "lex.l"
-{ return LEQ; }
+{ return GEQ; }
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
 #line 103 "lex.l"
-{ return NEQ; }
+{ return LEQ; }
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
 #line 104 "lex.l"
+{ return NEQ; }
+	YY_BREAK
+case 47:
+YY_RULE_SETUP
+#line 105 "lex.l"
 { return yytext[0]; }
 	YY_BREAK
 /* id */
-case 47:
+case 48:
 YY_RULE_SETUP
-#line 106 "lex.l"
+#line 107 "lex.l"
 {
     yylval->sv_str = yytext;
     return IDENTIFIER;
 }
 	YY_BREAK
 /* literals */
-case 48:
+case 49:
 YY_RULE_SETUP
-#line 111 "lex.l"
+#line 112 "lex.l"
 {
     yylval->sv_int = atoi(yytext);
     return VALUE_INT;
 }
 	YY_BREAK
-case 49:
+case 50:
 YY_RULE_SETUP
-#line 115 "lex.l"
+#line 116 "lex.l"
 {
     yylval->sv_float = atof(yytext);
     return VALUE_FLOAT;
 }
 	YY_BREAK
-case 50:
-/* rule 50 can match eol */
+case 51:
+/* rule 51 can match eol */
 YY_RULE_SETUP
-#line 119 "lex.l"
+#line 120 "lex.l"
 {
     yylval->sv_str = std::string(yytext + 1, strlen(yytext) - 2);
     return VALUE_STRING;
@@ -1223,21 +1228,21 @@ YY_RULE_SETUP
 /* EOF */
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(STATE_COMMENT):
-#line 124 "lex.l"
+#line 125 "lex.l"
 { return T_EOF; }
 	YY_BREAK
 /* unexpected char */
-case 51:
-YY_RULE_SETUP
-#line 126 "lex.l"
-{ std::cerr << "Lexer Error: unexpected character " << yytext[0] << std::endl; }
-	YY_BREAK
 case 52:
 YY_RULE_SETUP
 #line 127 "lex.l"
+{ std::cerr << "Lexer Error: unexpected character " << yytext[0] << std::endl; }
+	YY_BREAK
+case 53:
+YY_RULE_SETUP
+#line 128 "lex.l"
 ECHO;
 	YY_BREAK
-#line 1236 "/home/xirro/dbms2024/rmdb/src/parser/lex.yy.cpp"
+#line 1246 "/home/mhwwhu/db2024/rmdb/src/parser/lex.yy.cpp"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2203,6 +2208,6 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 127 "lex.l"
+#line 128 "lex.l"
 
 
