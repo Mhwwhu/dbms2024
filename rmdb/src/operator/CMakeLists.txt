@@ -4,7 +4,8 @@ set(SOURCES operator_generator.cpp
             project_oper.cpp
             table_scan_oper.cpp
             filter_oper.cpp
-            delete_oper.cpp)
+            delete_oper.cpp
+            update_oper.cpp)
 
 add_library(operator STATIC ${SOURCES})
 

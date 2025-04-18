@@ -32,5 +32,7 @@ RC DeleteOper::open(Context* context)
         if(RM_FAIL(rc)) return rc;
     }
 
+    // TODO: 删除索引项
+
     return RC::SUCCESS;
 }

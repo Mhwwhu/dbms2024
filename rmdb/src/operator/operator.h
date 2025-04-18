@@ -16,6 +16,7 @@ enum OperatorType {
     TABLE_SCAN_OPER,
     FILTER_OPER,
     DELETE_OPER,
+    UPDATE_OPER,
 };
 
 class Operator {

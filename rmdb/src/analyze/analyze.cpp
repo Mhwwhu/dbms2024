@@ -15,6 +15,7 @@ See the Mulan PSL v2 for more details. */
 #include "stmt/delete_stmt.h"
 #include "stmt/select_stmt.h"
 #include "stmt/show_tables_stmt.h"
+#include "stmt/update_stmt.h"
 #include "common/context.h"
 
 /**
@@ -113,6 +114,10 @@ RC Analyze::do_analyze(std::shared_ptr<ast::TreeNode> root, std::shared_ptr<IStm
     }
     if(auto node = std::dynamic_pointer_cast<ast::SelectNode>(root)) {
         rc = SelectStmt::create(sm_manager_, node, stmt, nullptr);
+        return rc;
+    }
+    if(auto node = std::dynamic_pointer_cast<ast::UpdateNode>(root)) {
+        rc = UpdateStmt::create(sm_manager_, node, stmt);
         return rc;
     }
     return RC::INTERNAL;

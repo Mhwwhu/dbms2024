@@ -5,6 +5,7 @@
 #include "table_scan_oper.h"
 #include "filter_oper.h"
 #include "delete_oper.h"
+#include "update_oper.h"
 #include "tuple/expr_tuple.h"
 
 using namespace std;
@@ -22,9 +23,11 @@ RC OperatorGenerator::generate(std::shared_ptr<Plan> plan, std::shared_ptr<Opera
         return create_operator(std::static_pointer_cast<FilterPlan>(plan), oper);
     case PlanTag::DELETE_PLAN:
         return create_operator(std::static_pointer_cast<DeletePlan>(plan), oper);
+    case PlanTag::UPDATE_PLAN:
+        return create_operator(std::static_pointer_cast<UpdatePlan>(plan), oper);
     }
     
-    return RC::SUCCESS;
+    return RC::INTERNAL;
 }
 
 RC OperatorGenerator::create_operator(std::shared_ptr<InsertPlan> plan, std::shared_ptr<Operator>& oper)
@@ -113,6 +116,20 @@ RC OperatorGenerator::create_operator(std::shared_ptr<DeletePlan> plan, std::sha
     if(RM_FAIL(rc)) return rc;
 
     oper = make_shared<DeleteOper>(plan->table_meta());
+    oper->add_child(std::move(child_oper));
+    return RC::SUCCESS;
+}
+
+RC OperatorGenerator::create_operator(std::shared_ptr<UpdatePlan> plan, std::shared_ptr<Operator>& oper)
+{
+    if(plan->children().size() != 1) return RC::INTERNAL;
+
+    auto child_plan = plan->children().front();
+    shared_ptr<Operator> child_oper;
+    RC rc = generate(child_plan, child_oper);
+    if(RM_FAIL(rc)) return rc;
+
+    oper = make_shared<UpdateOper>(plan->table_meta(), plan->set_list());
     oper->add_child(std::move(child_oper));
     return RC::SUCCESS;
 }

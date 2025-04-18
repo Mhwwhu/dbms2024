@@ -152,18 +152,9 @@ ddl:
     ;
 
 dml:
-        /* INSERT INTO tbName VALUES '(' valueList ')'
-    {
-        $$ = std::make_shared<InsertNode>($3, $6);
+    update {
+        $$ = std::move($1);
     }
-    |   DELETE FROM tbName optWhereClause
-    {
-        $$ = std::make_shared<DeleteNode>($3, $4);
-    }
-    |   UPDATE tbName SET setClauses optWhereClause
-    {
-        $$ = std::make_shared<UpdateNode>($2, $4, $5);
-    } */
     | delete {
         $$ = std::move($1);
     }
@@ -188,6 +179,11 @@ select:
 delete:
     DELETE FROM tbName optWhereClause {
         $$ = std::make_shared<DeleteNode>($3, $4);
+    }
+
+update:
+    UPDATE tbName SET setClauses optWhereClause {
+        $$ = std::make_shared<UpdateNode>($2, $4, $5);
     }
     
 optFromClause:
@@ -457,7 +453,7 @@ setClauses:
     ;
 
 setClause:
-        colName '=' value
+        colName '=' expr
     {
         $$ = std::make_shared<SetClause>($1, $3);
     }

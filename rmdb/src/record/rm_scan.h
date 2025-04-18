@@ -21,6 +21,7 @@ class RecScan {
     const RmFileHandle *file_handle_;
     std::shared_ptr<RmRecord> record_;
     std::shared_ptr<Expression> filter_;
+    Rid rid_;
     Context* context_;
 public:
     RecScan(const RmFileHandle *file_handle, std::shared_ptr<Expression> filter);

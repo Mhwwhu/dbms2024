@@ -19,6 +19,7 @@ See the Mulan PSL v2 for more details. */
 #include "table_scan_plan.h"
 #include "delete_plan.h"
 #include "filter_plan.h"
+#include "update_plan.h"
 
 using namespace std;
 using namespace common;
@@ -407,6 +408,8 @@ RC Planner::do_planner(std::shared_ptr<IStmt> stmt, Context* context, std::share
         return create_plan(std::static_pointer_cast<SelectStmt>(stmt), plan);
     case StmtType::DELETE_STMT:
         return create_plan(std::static_pointer_cast<DeleteStmt>(stmt), plan);
+    case StmtType::UPDATE_STMT:
+        return create_plan(std::static_pointer_cast<UpdateStmt>(stmt), plan);
     }
     
     return RC::INTERNAL;
@@ -488,6 +491,27 @@ RC Planner::create_plan(std::shared_ptr<InsertStmt> stmt, std::shared_ptr<Plan>&
     else {
         plan = std::make_shared<InsertPlan>(stmt->table_meta(), stmt->decl_cols(), stmt->opt_insert_rows());
     }
+
+    return rc;
+}
+
+RC Planner::create_plan(std::shared_ptr<UpdateStmt> stmt, std::shared_ptr<Plan>& plan)
+{
+    RC rc = RC::SUCCESS;
+
+    shared_ptr<Plan> last_plan = nullptr;
+
+    auto table_meta = stmt->table_meta();
+    last_plan = make_shared<TableScanPlan>(table_meta, table_meta.alias_name, nullptr);
+
+    if(stmt->filter()) {
+        auto filter_plan = make_shared<FilterPlan>(stmt->filter()->expr());
+        filter_plan->add_child(last_plan);
+        last_plan = filter_plan;
+    }
+
+    plan = make_shared<UpdatePlan>(stmt->table_meta(), stmt->set_list());
+    plan->add_child(last_plan);
 
     return rc;
 }

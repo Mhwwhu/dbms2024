@@ -69,6 +69,8 @@ struct ColMeta : public VirtualFieldMeta{
     : VirtualFieldMeta(name_, type_, len_, common::VirtualFieldType::TABLE_COL),
      name(name_), type(type_), len(len_), offset(offset_), id(id_), nullable(nullable_) {}
 
+    bool operator<(const ColMeta& other) const { return name < other.name; }
+
     Json::Value to_json() 
     {
         Json::Value col_value;

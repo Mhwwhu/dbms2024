@@ -105,10 +105,10 @@ struct Col : public TreeNode {
 
 struct SetClause : public TreeNode {
     std::string col_name;
-    std::shared_ptr<Value> val;
+    std::shared_ptr<Expression> expr;
 
-    SetClause(std::string col_name_, std::shared_ptr<Value> val_) :
-            col_name(std::move(col_name_)), val(std::move(val_)) {}
+    SetClause(std::string col_name_, std::shared_ptr<Expression> expr_) :
+            col_name(std::move(col_name_)), expr(std::move(expr_)) {}
 };
 
 struct OrderByUnitNode : public TreeNode {
@@ -190,26 +190,15 @@ struct DeleteNode : public TreeNode {
     DeleteNode(std::string tab_name_, std::shared_ptr<Expression> where_conj_) :
             tab_name(std::move(tab_name_)), where_conj(std::move(where_conj_)) {}
 };
-// struct SelectNode : public TreeNode {
-//     std::vector<std::shared_ptr<Col>> cols;
-//     std::vector<std::string> tabs;
-//     std::vector<std::shared_ptr<BinaryExpr>> conds;
-//     std::vector<std::shared_ptr<JoinExpr>> jointree;
 
-    
-//     bool has_sort;
-//     std::shared_ptr<OrderBy> order;
+struct UpdateNode : public TreeNode {
+    std::string tab_name;
+    std::vector<std::shared_ptr<SetClause>> set_clause;
+    std::shared_ptr<Expression> filter;
 
-
-//     SelectNode(std::vector<std::shared_ptr<Col>> cols_,
-//                std::vector<std::string> tabs_,
-//                std::vector<std::shared_ptr<BinaryExpr>> conds_,
-//                std::shared_ptr<OrderBy> order_) :
-//             cols(std::move(cols_)), tabs(std::move(tabs_)), conds(std::move(conds_)), 
-//             order(std::move(order_)) {
-//                 has_sort = (bool)order;
-//             }
-// };
+    UpdateNode(const std::string& tab_name_, const std::vector<std::shared_ptr<SetClause>>& set_clause_ , std::shared_ptr<Expression> filter_)
+    : tab_name(tab_name_), set_clause(set_clause_), filter(std::move(filter_)) {}
+};
 
 // // set enable_nestloop
 // struct SetNode : public TreeNode {
