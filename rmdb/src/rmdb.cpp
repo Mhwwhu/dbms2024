@@ -26,6 +26,8 @@ See the Mulan PSL v2 for more details. */
 #include "operator/operator_generator.h"
 #include "printer/printer.h"
 
+#include "logger/logger.h"
+
 #define SOCK_PORT 8765
 #define MAX_CONN_LIMIT 8
 
@@ -47,6 +49,7 @@ auto log_manager = std::make_unique<LogManager>(disk_manager.get());
 auto recovery = std::make_unique<RecoveryManager>(disk_manager.get(), buffer_pool_manager.get(), sm_manager.get());
 auto portal = std::make_unique<Portal>(sm_manager.get());
 auto analyze = std::make_unique<Analyze>(sm_manager.get());
+auto parser = std::make_unique<Parser>();
 pthread_mutex_t *buffer_mutex;
 pthread_mutex_t *sockfd_mutex;
 
@@ -69,6 +72,44 @@ void SetTransaction(txn_id_t *txn_id, Context *context) {
     }
 }
 
+RC handle_sql(Context *context) {
+    RC rc = RC::SUCCESS;
+
+    // 语法解析
+    rc = parser->handle_request(context);
+    if(RM_FAIL(rc)) {
+        LOG_ERROR("Failed to do parse");
+        context->sql_result.set_return_code(rc);
+        return rc;
+    }
+
+    // 语义分析
+    rc = analyze->handle_request(context);
+    if(RM_FAIL(rc)) {
+        LOG_ERROR("Failed to do analyze");
+        context->sql_result.set_return_code(rc);
+        return rc;
+    }
+
+    // 优化器
+    rc = optimizer->handle_request(context);
+    if(RM_FAIL(rc)) {
+        LOG_ERROR("Failed to do optimize");
+        context->sql_result.set_return_code(rc);
+        return rc;
+    }
+
+    // 执行器
+    rc = portal->handle_request(context);
+    if(RM_FAIL(rc)) {
+        LOG_ERROR("Failed to do execute");
+        context->sql_result.set_return_code(rc);
+        return rc;
+    }
+
+    return rc;
+}
+
 void *client_handler(void *sock_fd) {
     int fd = *((int *)sock_fd);
     pthread_mutex_unlock(sockfd_mutex);
@@ -85,6 +126,7 @@ void *client_handler(void *sock_fd) {
 
     std::string output = "establish client connection, sockfd: " + std::to_string(fd) + "\n";
     std::cout << output;
+    LOG_INFO("establish client connection, sockfd: {}", fd);
 
     auto client_printer = printer_factory->get_printer(PrinterType::UNSAFE_PRINTER);
     client_printer->init(fd);
@@ -100,12 +142,12 @@ void *client_handler(void *sock_fd) {
             break;
         }
         if (i_recvBytes == -1) {
-            std::cout << "Client read error!" << std::endl;
-            std::cout << errno << std::endl;
+            LOG_ERROR("client read error, errorno: {}", errno);
             break;
         }
         
         printf("i_recvBytes: %d \n ", i_recvBytes);
+        LOG_INFO("i_recvBytes: {}", i_recvBytes);
 
         if (strcmp(data_recv, "exit") == 0) {
             std::cout << "Client exit." << std::endl;
@@ -117,6 +159,7 @@ void *client_handler(void *sock_fd) {
         }
 
         std::cout << "Read from client " << fd << ": " << data_recv << std::endl;
+        LOG_INFO("Read from client {}: {}", fd, data_recv);
 
         memset(data_send, '\0', BUFFER_LENGTH);
         offset = 0;
@@ -124,70 +167,32 @@ void *client_handler(void *sock_fd) {
         // 开启事务，初始化系统所需的上下文信息（包括事务对象指针、锁管理器指针、日志管理器指针、存放结果的buffer、记录结果长度的变量）
         Context *context = new Context(lock_manager.get(), log_manager.get(),  nullptr, sm_manager.get(), txn_manager.get(), data_send, &offset);
         SetTransaction(&txn_id, context);
-
-        // 用于判断是否已经调用了yy_delete_buffer来删除buf
-        bool finish_analyze = false;
-        pthread_mutex_lock(buffer_mutex);
-        YY_BUFFER_STATE buf = yy_scan_string(data_recv);
+        
         context->sql = data_recv;
-        if (yyparse() == 0) {
-            if (ast::parse_tree != nullptr) {
-                try {
-                    RC rc = RC::SUCCESS;
-                    context->sql_node = ast::parse_tree;
-                    // analyze and rewrite
-                    rc = analyze->handle_request(context);
-                    if(RM_FAIL(rc)) throw new RMDBError("analyze failed");
-                    yy_delete_buffer(buf);
-                    finish_analyze = true;
-                    pthread_mutex_unlock(buffer_mutex);
-                    // 优化器
-                    rc = optimizer->handle_request(context);
-                    if(RM_FAIL(rc)) throw new RMDBError("optimize failed");
-                    // portal
-                    rc = portal->handle_request(context);
-                    if(RM_FAIL(rc)) throw new RMDBError("execution failed");
-                    // rc = portal->run(context);
-                    rc = client_printer->write_result(context);
-                    if(RM_FAIL(rc)) throw new RMDBError("getting result failed");
-                    
-                    portal->drop();
-                } catch (TransactionAbortException &e) {
-                    // 事务需要回滚，需要把abort信息返回给客户端并写入output.txt文件中
-                    std::string str = "abort\n";
-                    memcpy(data_send, str.c_str(), str.length());
-                    data_send[str.length()] = '\0';
-                    offset = str.length();
-
-                    // 回滚事务
-                    txn_manager->abort(context->txn_, log_manager.get());
-                    std::cout << e.GetInfo() << std::endl;
-
-                    std::fstream outfile;
-                    outfile.open("output.txt", std::ios::out | std::ios::app);
-                    outfile << str;
-                    outfile.close();
-                } catch (RMDBError &e) {
-                    // 遇到异常，需要打印failure到output.txt文件中，并发异常信息返回给客户端
-                    std::cerr << e.what() << std::endl;
-
-                    memcpy(data_send, e.what(), e.get_msg_len());
-                    data_send[e.get_msg_len()] = '\n';
-                    data_send[e.get_msg_len() + 1] = '\0';
-                    offset = e.get_msg_len() + 1;
-
-                    // 将报错信息写入output.txt
-                    std::fstream outfile;
-                    outfile.open("output.txt",std::ios::out | std::ios::app);
-                    outfile << "failure\n";
-                    outfile.close();
-                }
+        try {
+            handle_sql(context);
+            RC rc = client_printer->write_result(context);
+            if(RM_FAIL(rc)) {
+                LOG_ERROR("Getting result failed, rc = {}", strrc(rc));
             }
+            
+        } catch (TransactionAbortException &e) {
+            // 事务需要回滚，需要把abort信息返回给客户端并写入output.txt文件中
+            std::string str = "abort\n";
+            memcpy(data_send, str.c_str(), str.length());
+            data_send[str.length()] = '\0';
+            offset = str.length();
+
+            // 回滚事务
+            txn_manager->abort(context->txn_, log_manager.get());
+            std::cout << e.GetInfo() << std::endl;
+
+            std::fstream outfile;
+            outfile.open("output.txt", std::ios::out | std::ios::app);
+            outfile << str;
+            outfile.close();
         }
-        if(finish_analyze == false) {
-            yy_delete_buffer(buf);
-            pthread_mutex_unlock(buffer_mutex);
-        }
+
         // future TODO: 格式化 sql_handler.result, 传给客户端
         // send result with fixed format, use protobuf in the future
         // if (write(fd, data_send, offset + 1) == -1) {
@@ -229,13 +234,13 @@ void start_server() {
     s_addr_in.sin_port = htons(SOCK_PORT);
     fd_temp = bind(sockfd_server, (struct sockaddr *)(&s_addr_in), sizeof(s_addr_in));
     if (fd_temp == -1) {
-        std::cout << "Bind error!" << std::endl;
+        LOG_CRITICAL("Bind error!");
         exit(1);
     }
 
     fd_temp = listen(sockfd_server, MAX_CONN_LIMIT);
     if (fd_temp == -1) {
-        std::cout << "Listen error!" << std::endl;
+        LOG_CRITICAL("Listen error!");
         exit(1);
     }
 
@@ -254,13 +259,13 @@ void start_server() {
         pthread_mutex_lock(sockfd_mutex);
         int sockfd = accept(sockfd_server, (struct sockaddr *)(&s_addr_client), (socklen_t *)(&client_length));
         if (sockfd == -1) {
-            std::cout << "Accept error!" << std::endl;
+            LOG_CRITICAL("Accept error!");
             continue;  // ignore current socket ,continue while loop.
         }
         
         // 和客户端建立连接，并开启一个线程负责处理客户端请求
         if (pthread_create(&thread_id, nullptr, &client_handler, (void *)(&sockfd)) != 0) {
-            std::cout << "Create thread fail!" << std::endl;
+            LOG_CRITICAL("Create thread failed!");
             break;  // break while loop
         }
 
@@ -274,6 +279,8 @@ void start_server() {
     sm_manager->close_db();
     std::cout << " DB has been closed.\n";
     std::cout << "Server shuts down." << std::endl;
+    LOG_INFO("DB has been closed.");
+    LOG_INFO("Server shuts down.");
 }
 
 int main(int argc, char **argv) {
@@ -284,6 +291,7 @@ int main(int argc, char **argv) {
     }
 
     signal(SIGINT, sigint_handler);
+    setup_logger();
     try {
         std::cout << "\n"
                      "  _____  __  __ _____  ____  \n"
@@ -300,19 +308,22 @@ int main(int argc, char **argv) {
         RC rc;
         std::string db_name = argv[1];
         if (!disk_manager->is_dir(db_name)) {
+            LOG_INFO("Database {} is not found, create a new one", db_name);
             // Database not found, create a new one
             rc = sm_manager->create_db(db_name);
             if(RM_FAIL(rc)) {
-                std::cout<< strrc(rc) << std::endl;
+                LOG_CRITICAL("Create database {} failed, rc = {}", db_name, strrc(rc));
                 exit(1);
             }
         }
         // Open database
         rc = sm_manager->open_db(db_name);
         if(RM_FAIL(rc)) {
-            std::cout<< strrc(rc) << std::endl;
+            LOG_CRITICAL("Open database {} failed, rc = {}", db_name, strrc(rc));
             exit(1);
         }
+
+        LOG_INFO("Database {} opened", db_name);
 
         // recovery database
         recovery->analyze();
@@ -322,8 +333,9 @@ int main(int argc, char **argv) {
         // 开启服务端，开始接受客户端连接
         start_server();
     } catch (RMDBError &e) {
-        std::cerr << e.what() << std::endl;
+        LOG_CRITICAL("Fatal error: {}", e.what());
         exit(1);
     }
+    spdlog::shutdown();
     return 0;
 }

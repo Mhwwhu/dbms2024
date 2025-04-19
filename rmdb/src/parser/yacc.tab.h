@@ -121,7 +121,7 @@ struct YYLTYPE
 
 
 
-int yyparse (void);
+int yyparse (const char * sql_string, std::shared_ptr<ast::TreeNode>& sql_result, void * scanner);
 
 
 #endif /* !YY_YY_HOME_MHWWHU_DB2024_RMDB_SRC_PARSER_YACC_TAB_H_INCLUDED  */

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "logger/logger.h"
+
 /**
  * @brief 这个文件定义函数返回码/错误码(Return Code)
  * @enum RC

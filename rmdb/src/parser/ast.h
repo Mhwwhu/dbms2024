@@ -26,6 +26,12 @@ struct TreeNode {
     virtual ~TreeNode() = default;  // enable polymorphism
 };
 
+struct ErrorNode : public TreeNode {
+    std::string error_msg;
+    int line;
+    int col;
+};
+
 struct Help : public TreeNode {
 };
 
@@ -249,9 +255,6 @@ struct SemValue {
 
     common::SetKnobType sv_setKnobType;
 };
-
-extern std::shared_ptr<ast::TreeNode> parse_tree;
-
 }
 
 #define YYSTYPE ast::SemValue

@@ -13,3 +13,14 @@ See the Mulan PSL v2 for more details. */
 #include "ast_printer.h"
 #include "ast.h"
 #include "parser_defs.h"
+
+class Context;
+
+class Parser {
+public:
+	Parser() = default;
+	~Parser() = default;
+
+	RC handle_request(Context* ctx);
+	RC parse(const char* sql, std::shared_ptr<ast::TreeNode>& sql_result);
+};

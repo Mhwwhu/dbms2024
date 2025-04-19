@@ -1,4 +1,4 @@
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR} "../deps")
 
 add_subdirectory(analyze)
 add_subdirectory(record)
@@ -18,6 +18,7 @@ add_subdirectory(plan)
 add_subdirectory(operator)
 add_subdirectory(printer)
 add_subdirectory(binder)
+add_subdirectory(logger)
 add_subdirectory(test)
 
 set(SOURCES portal.cpp)
@@ -29,7 +30,7 @@ target_link_libraries(portal executor)
 target_link_libraries(parser pthread)
 
 add_executable(rmdb rmdb.cpp)
-target_link_libraries(rmdb parser readline pthread plan analyze common transaction portal optimizer printer expression)
+target_link_libraries(rmdb parser readline pthread plan analyze common transaction portal optimizer printer expression logger)
 
 # unit_test
 add_executable(unit_test unit_test.cpp)

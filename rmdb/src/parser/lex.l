@@ -9,6 +9,8 @@
     /* enable location */
 %option bison-bridge
 %option bison-locations
+%option reentrant
+%option header-file="lex.h"
 
 %{
 #include "ast.h"
@@ -125,3 +127,7 @@ single_op ";"|"("|")"|","|"*"|"="|">"|"<"|"."
     /* unexpected char */
 . { std::cerr << "Lexer Error: unexpected character " << yytext[0] << std::endl; }
 %%
+
+void scan_string(const char *str, yyscan_t scanner) {
+  yy_switch_to_buffer(yy_scan_string(str, scanner), scanner);
+}
