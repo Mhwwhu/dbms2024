@@ -7,13 +7,14 @@
 #include "expression/unbound_field_expr.h"
 #include "expression/comparison_expr.h"
 #include "expression/conjunction_expr.h"
+#include "expression/star_expr.h"
 #include <iostream>
 #include <memory>
 
 
 std::string token_name(const char *sql_string, YYLTYPE *llocp)
 {
-    return std::string(sql_string + llocp->first_column, llocp->last_column - llocp->first_column + 1);
+    return std::string(sql_string + llocp->first_column - 1, llocp->last_column - llocp->first_column + 1);
 }
 
 int yyerror(YYLTYPE *locp, const char* s, std::shared_ptr<ast::TreeNode>& sql_result, yyscan_t scanner, const char* msg) {
@@ -62,7 +63,8 @@ WHERE UPDATE SET SELECT INT CHAR FLOAT INDEX AND OR JOIN EXIT HELP TXN_BEGIN TXN
 %type <sv_fields> fieldList
 %type <sv_type_len> type
 %type <sv_comp_op> compOp
-%type <sv_expr> expr valueExpr unboundFieldExpr compExpr conjunctionExpr optWhereClause optHavingClause onClause 
+%type <sv_expr> expr valueExpr unboundFieldExpr compExpr conjunctionExpr starExpr
+                optWhereClause optHavingClause onClause 
 %type <sv_exprs> exprList optGroupbyClause
 %type <sv_expr_chunk> insertList
 %type <sv_val> value
@@ -420,13 +422,21 @@ expr:
     } 
     | valueExpr {
         $$ = std::move($1);
+        $$->set_name(token_name(sql_string, &@1));
     }
     | unboundFieldExpr {
         $$ = std::move($1);
+        $$->set_name(token_name(sql_string, &@$));
     }
     | compExpr {
         $$ = std::move($1);
+        $$->set_name(token_name(sql_string, &@$));
     }
+    | starExpr {
+        $$ = std::move($1);
+        $$->set_name(token_name(sql_string, &@$));
+    }
+    ;
 
 valueExpr:
     value {
@@ -456,6 +466,15 @@ conjunctionExpr:
     | expr OR expr {
         $$ = std::make_shared<ConjunctionExpr>(std::move($1), std::move($3), common::ConjunctionType::OR);
     }
+
+starExpr:
+    '*' {
+        $$ = std::make_shared<StarExpr>();
+    }
+    | tbName '.' '*' {
+        $$ = std::make_shared<StarExpr>($1);
+    }
+    ;
 
 setClauses:
         setClause

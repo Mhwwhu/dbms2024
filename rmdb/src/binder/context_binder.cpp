@@ -4,8 +4,20 @@
 #include "expression/field_expr.h"
 #include "expression/comparison_expr.h"
 #include "expression/conjunction_expr.h"
+#include "expression/star_expr.h"
 
 using namespace std;
+
+void ContextBinder::wildcard_fields(std::shared_ptr<VirtualTabMeta> vtable, std::vector<std::shared_ptr<Expression>>& bound_exprs)
+{
+    for(auto vfield : vtable->vcols) {
+        auto field_expr = make_shared<FieldExpr>(vfield, vtable);
+        field_expr->set_name(vfield->alias_name);
+        bound_exprs.push_back(std::move(field_expr));
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 RC ContextBinder::bind_expression(std::shared_ptr<Expression> expr, std::vector<std::shared_ptr<Expression>>& bound_exprs)
 {
@@ -24,6 +36,9 @@ RC ContextBinder::bind_expression(std::shared_ptr<Expression> expr, std::vector<
     }
     case ExprType::CONJUNCTION: {
         return bind_conjunction_expr(expr, bound_exprs);
+    }
+    case ExprType::UNBOUND_STAR: {
+        return bind_unbound_star_expr(expr, bound_exprs);
     }
 
     default: {
@@ -74,7 +89,8 @@ RC ContextBinder::bind_unbound_field_expr(std::shared_ptr<Expression> expr, std:
 
 RC ContextBinder::bind_field_expr(std::shared_ptr<Expression> expr, std::vector<std::shared_ptr<Expression>>& bound_exprs)
 {
-
+    bound_exprs.push_back(expr);
+    return RC::SUCCESS;
 }
 
 RC ContextBinder::bind_value_expr(std::shared_ptr<Expression> expr, std::vector<std::shared_ptr<Expression>>& bound_exprs)
@@ -116,5 +132,44 @@ RC ContextBinder::bind_comp_expr(std::shared_ptr<Expression> expr, std::vector<s
     auto new_comp_expr = make_shared<ComparisonExpr>(left, right, comp_expr->op());
     new_comp_expr->set_name(comp_expr->name());
     bound_exprs.push_back(new_comp_expr);
+    return RC::SUCCESS;
+}
+
+RC ContextBinder::bind_unbound_star_expr(std::shared_ptr<Expression> expr, std::vector<std::shared_ptr<Expression>>& bound_exprs)
+{
+    if(expr == nullptr) return RC::INVALID_ARGUMENT;
+
+    auto star_expr = static_pointer_cast<StarExpr>(expr);
+    
+    vector<shared_ptr<VirtualTabMeta>> tables_to_wildcard;
+    auto context = context_;
+	bool find_table = false;
+	auto table_name = star_expr->table_name();
+	if (table_name != "") {
+		while (context != nullptr) {
+			auto vtable = context->find_vtable(table_name);
+			if (vtable == nullptr) {
+				LOG_INFO("no such table in from list: %s", table_name);
+				context = context->outer_context();
+				continue;
+			}
+			find_table = true;
+			tables_to_wildcard.push_back(vtable);
+			break;
+		}
+		if (!find_table) {
+			LOG_WARN("no such table in global context: %s", table_name);
+			return RC::SCHEMA_TABLE_NOT_EXIST;
+		}
+	}
+	else {
+		const auto& all_tables = context_->query_vtables();
+		tables_to_wildcard.insert(tables_to_wildcard.end(), all_tables.begin(), all_tables.end());
+	}
+
+    for (auto table : tables_to_wildcard) {
+		wildcard_fields(table, bound_exprs);
+	}
+
     return RC::SUCCESS;
 }
