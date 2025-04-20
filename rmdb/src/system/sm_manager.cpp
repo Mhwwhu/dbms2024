@@ -281,26 +281,14 @@ RC SmManager::create_index( TabMeta& tab_meta, const std::vector<ColMeta>& col_m
     if(RM_FAIL(rc = scan.open(context))){
         return rc;
     };
-    while (!scan.is_end()) {
-        RmRecord record;
-        if (RM_FAIL(rc = file_handle->get_record(scan.rid(), &record))) {
-            scan.close();
+    while (RM_SUCC(rc = scan.next())) {
+        vector<char> key;
+        if(RM_FAIL( rc = ix_manager_->make_key(scan.record(),col_metas,key))){
             return rc;
         }
-        std::vector<Value> values;
-        for (const auto& col : index_cols) {
-            Value value;
-            memcpy(&value, record.data + col.offset, col.len);
-            values.push_back(value);
-        }
-        if (RM_FAIL(rc = ihs_.at(index_key)->insert_entry(values, scan.rid()))) {
-            scan.close();
-            return rc;
-        }
-        scan.next();
+        index_handle->insert_entry(key.data(), scan.record()->rid , context->txn_);
+        
     }
-    scan.close();
-
     return RC::SUCCESS;
 }
 

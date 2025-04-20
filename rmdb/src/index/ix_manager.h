@@ -16,6 +16,7 @@ See the Mulan PSL v2 for more details. */
 #include "system/sm_meta.h"
 #include "ix_defs.h"
 #include "ix_index_handle.h"
+#include "record/rm_defs.h"
 
 class IxManager {
    private:
@@ -53,7 +54,27 @@ class IxManager {
         auto ix_name = get_index_name(filename, index_cols);
         return disk_manager_->is_file(ix_name);
     }
+    RC  make_key(shared_ptr<RmRecord>& record , const vector<ColMeta>& col_metas , vector<char>& key){
 
+        RC rc = RC::SUCCESS;
+        int size ;
+        for(auto col :col_metas){
+            size+=col.len;
+        }
+        size+=sizeof(Rid);
+        
+        key.resize(size);
+
+        int offset = 0;
+
+        for (const auto& col : col_metas) {
+            memcpy(key.data() + offset, record->data + col.offset, col.len);
+            offset+=col.len;
+        }
+        memcpy(key.data() + offset , &(record->rid) , sizeof(Rid));
+
+        return rc;
+    }
    RC create_index(const std::string &ix_name, const std::vector<ColMeta>& index_cols) {
         // std::string ix_name = get_index_name(filename, index_cols);
         // Create index file
