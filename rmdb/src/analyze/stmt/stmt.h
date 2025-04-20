@@ -6,6 +6,9 @@ class BinderContext;
 class JointreeContext;
 
 enum StmtType {
+    TXN_BEGIN_STMT,
+    TXN_COMMIT_STMT,
+    TXN_ABORT_STMT,
     SELECT_STMT,
     DELETE_STMT,
     INSERT_STMT,

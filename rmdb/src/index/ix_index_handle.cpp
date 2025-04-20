@@ -427,16 +427,17 @@ void IxIndexHandle::insert_into_parent(IxNodeHandle *old_node, const char *key, 
  * @param transaction 事务指针
  * @return page_id_t 插入到的叶结点的page_no
  */
-page_id_t IxIndexHandle::insert_entry(const char *key, const Rid &value, Transaction *transaction) {
+RC IxIndexHandle::insert_entry(const char *key, const Rid &value, Transaction *transaction , page_id_t& pg_id) {
     // Todo:
     // 1. 查找key值应该插入到哪个叶子节点
     // 2. 在该叶子节点中插入键值对
     // 3. 如果结点已满，分裂结点，并把新结点的相关信息插入父节点
     // 提示：记得unpin page；若当前叶子节点是最右叶子节点，则需要更新file_hdr_.last_leaf；记得处理并发的上锁
         // 1. 查找key值应该插入到哪个叶子节点
+        RC rc = RC::SUCCESS;
         auto [leaf_node, root_is_latched] = find_leaf_page(key, Operation::INSERT, transaction, false);
         if (leaf_node == nullptr) {
-            return -1;
+            return RC::INTERNAL;
         }
         page_id_t leaf_page_no = leaf_node->get_page_no();
     
@@ -463,7 +464,7 @@ page_id_t IxIndexHandle::insert_entry(const char *key, const Rid &value, Transac
         buffer_pool_manager_->unpin_page(leaf_node->get_page_id(), true);
         delete leaf_node;
     
-        return leaf_page_no;
+        return rc;
 }
 
 /**

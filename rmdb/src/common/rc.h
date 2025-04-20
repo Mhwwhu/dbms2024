@@ -1,5 +1,7 @@
 #pragma once
 
+#include "logger/logger.h"
+
 /**
  * @brief 这个文件定义函数返回码/错误码(Return Code)
  * @enum RC
@@ -80,6 +82,7 @@
   DEFINE_RC(FIELD_BIND_ERR)              \
   DEFINE_RC(IMPLICIT_INSERT_FIELD)       \
   DEFINE_RC(OPERATOR_NOT_OPENED)         \
+  DEFINE_RC(TXN_STATE_ERR)               \
   DEFINE_RC(UNSUPPORTED)
 
 enum class RC

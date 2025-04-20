@@ -25,6 +25,7 @@ typedef enum PlanTag{
    PROJECT_PLAN,
    TABLE_SCAN_PLAN,
    FLITER_PLAN,
+   UPDATE_PLAN,
 } PlanTag;
 
 // 查询执行计划

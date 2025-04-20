@@ -1,4 +1,5 @@
-#include "stmt/delete_stmt.h"
+#include "delete_stmt.h"
+#include "binder/binder_context.h"
 
 RC DeleteStmt::create(SmManager* sm_manager, std::shared_ptr<ast::DeleteNode> delete_node, std::shared_ptr<IStmt>& stmt){
     RC rc = RC::SUCCESS;
@@ -12,10 +13,12 @@ RC DeleteStmt::create(SmManager* sm_manager, std::shared_ptr<ast::DeleteNode> de
     
     std::shared_ptr<FilterClause> where_clause;
     if(delete_node->where_conj != nullptr){
-        if(RM_FAIL(rc = FilterClause::create(sm_manager, delete_node->where_conj, where_clause , nullptr))) return rc;
+        auto cur_context = std::make_shared<BinderContext>(nullptr);
+        cur_context->add_table(std::make_shared<TabMeta>(table_meta));
+        if(RM_FAIL(rc = FilterClause::create(sm_manager, delete_node->where_conj, where_clause , cur_context))) return rc;
     }
 
-    stmt = std::make_shared<DeleteStmt>(table_meta,where_clause);
+    stmt = std::make_shared<DeleteStmt>(table_meta, where_clause);
 
     return rc;
 }

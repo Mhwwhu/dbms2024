@@ -1,16 +1,30 @@
 %{
 #include "ast.h"
 #include "yacc.tab.h"
+#include "lex.h"
 #include "expression/expression.h"
 #include "expression/value_expr.h"
 #include "expression/unbound_field_expr.h"
+#include "expression/comparison_expr.h"
+#include "expression/conjunction_expr.h"
+#include "expression/star_expr.h"
 #include <iostream>
 #include <memory>
 
-int yylex(YYSTYPE *yylval, YYLTYPE *yylloc);
 
-void yyerror(YYLTYPE *locp, const char* s) {
+std::string token_name(const char *sql_string, YYLTYPE *llocp)
+{
+    return std::string(sql_string + llocp->first_column - 1, llocp->last_column - llocp->first_column);
+}
+
+int yyerror(YYLTYPE *locp, const char* s, std::shared_ptr<ast::TreeNode>& sql_result, yyscan_t scanner, const char* msg) {
     std::cerr << "Parser Error at line " << locp->first_line << " column " << locp->first_column << ": " << s << std::endl;
+    auto error_node = std::make_shared<ast::ErrorNode>();
+    error_node->error_msg = msg;
+    error_node->line = locp->first_line;
+    error_node->col = locp->first_column;
+    sql_result = std::move(error_node);
+    return 0;
 }
 
 using namespace ast;
@@ -23,9 +37,17 @@ using namespace ast;
 // enable verbose syntax error message
 %define parse.error verbose
 
+/** 启用位置标识 **/
+%locations
+%lex-param { yyscan_t scanner }
+/** 这些定义了在yyparse函数中的参数 **/
+%parse-param { const char * sql_string }
+%parse-param { std::shared_ptr<ast::TreeNode>& sql_result }
+%parse-param { void * scanner }
+
 // keywords
 %token SHOW TABLES CREATE TABLE DROP DESC INSERT INTO VALUES DELETE FROM ASC ORDER BY ON
-WHERE UPDATE SET SELECT INT CHAR FLOAT INDEX AND JOIN EXIT HELP TXN_BEGIN TXN_COMMIT TXN_ABORT TXN_ROLLBACK ORDER_BY ENABLE_NESTLOOP ENABLE_SORTMERGE
+WHERE UPDATE SET SELECT INT CHAR FLOAT INDEX AND OR JOIN EXIT HELP TXN_BEGIN TXN_COMMIT TXN_ABORT TXN_ROLLBACK ORDER_BY ENABLE_NESTLOOP ENABLE_SORTMERGE
 // non-keywords
 %token LEQ NEQ GEQ T_EOF
 
@@ -36,12 +58,13 @@ WHERE UPDATE SET SELECT INT CHAR FLOAT INDEX AND JOIN EXIT HELP TXN_BEGIN TXN_CO
 %token <sv_bool> VALUE_BOOL
 
 // specify types for non-terminal symbol
-%type <sv_node> stmt dbStmt ddl dml txnStmt setStmt insert select delete update
+%type <sv_node> start stmt dbStmt ddl dml txnStmt setStmt insert select delete update
 %type <sv_field> field
 %type <sv_fields> fieldList
 %type <sv_type_len> type
-%type <sv_comp_op> op
-%type <sv_expr> expr
+%type <sv_comp_op> compOp
+%type <sv_expr> expr valueExpr unboundFieldExpr compExpr conjunctionExpr starExpr
+                optWhereClause optHavingClause onClause 
 %type <sv_exprs> exprList optGroupbyClause
 %type <sv_expr_chunk> insertList
 %type <sv_val> value
@@ -54,7 +77,6 @@ WHERE UPDATE SET SELECT INT CHAR FLOAT INDEX AND JOIN EXIT HELP TXN_BEGIN TXN_CO
 %type <sv_set_clauses> setClauses
 %type <sv_cond> condition
 /* %type <sv_conds>  */
-%type <sv_conjunction> optWhereClause optHavingClause onClause
 %type <sv_orderby>  optOrderbyClause
 %type <sv_setKnobType> set_knob_type
 %type <sv_int> optLimitClause
@@ -66,22 +88,7 @@ WHERE UPDATE SET SELECT INT CHAR FLOAT INDEX AND JOIN EXIT HELP TXN_BEGIN TXN_CO
 start:
         stmt ';'
     {
-        parse_tree = $1;
-        YYACCEPT;
-    }
-    |   HELP
-    {
-        parse_tree = std::make_shared<Help>();
-        YYACCEPT;
-    }
-    |   EXIT
-    {
-        parse_tree = nullptr;
-        YYACCEPT;
-    }
-    |   T_EOF
-    {
-        parse_tree = nullptr;
+        sql_result = std::move($1);
         YYACCEPT;
     }
     ;
@@ -151,18 +158,9 @@ ddl:
     ;
 
 dml:
-        /* INSERT INTO tbName VALUES '(' valueList ')'
-    {
-        $$ = std::make_shared<InsertNode>($3, $6);
+    update {
+        $$ = std::move($1);
     }
-    |   DELETE FROM tbName optWhereClause
-    {
-        $$ = std::make_shared<DeleteNode>($3, $4);
-    }
-    |   UPDATE tbName SET setClauses optWhereClause
-    {
-        $$ = std::make_shared<UpdateNode>($2, $4, $5);
-    } */
     | delete {
         $$ = std::move($1);
     }
@@ -178,27 +176,38 @@ insert:
     INSERT INTO tbName optColumnClause insertList {
         $$ = std::make_shared<InsertNode>($3, $4, $5);
     }
+    ;
 
 select:
     SELECT exprList optFromClause optGroupbyClause optHavingClause optWhereClause optOrderbyClause optLimitClause {
         $$ = std::make_shared<SelectNode>($2, $3, $4, $5, $6, $7, $8);
     }
+    ;
 
 delete:
     DELETE FROM tbName optWhereClause {
         $$ = std::make_shared<DeleteNode>($3, $4);
     }
+    ;
+
+update:
+    UPDATE tbName SET setClauses optWhereClause {
+        $$ = std::make_shared<UpdateNode>($2, $4, $5);
+    }
+    ;
     
 optFromClause:
     { $$ = nullptr; }
     | FROM joinTree {
         $$ = std::move($2);
     }
+    ;
 
 virtualTable:
     tbName {
         $$ = std::make_shared<VirtualTableNode>($1, $1);
     }
+    ;
 
 joinTree:
     virtualTable {
@@ -213,32 +222,39 @@ joinTree:
     | '(' joinTree ')' {
         $$ = std::move($2);
     }
+    ;
 
 join_type:
     JOIN {
         $$ = common::JoinType::INNER_JOIN;
     }
+    ;
 
 onClause:
     ON  {
         $$ = nullptr;
     }
+    ;
 
 
 optGroupbyClause:
-    { $$ = std::vector<std::shared_ptr<Expression>>(); }
+    { $$ = std::vector<std::shared_ptr<Expression>>(); };
 
 optHavingClause:
-    { $$ = nullptr; }
+    { $$ = nullptr; };
 
 optWhereClause:
     { $$ = nullptr; }
+    | WHERE conjunctionExpr {
+        $$ = std::move($2);
+    }
+    ;
 
 optOrderbyClause:
-    { $$ = nullptr; }
+    { $$ = nullptr; };
 
 optLimitClause:
-    { $$ = -1; }
+    { $$ = -1; };
 
 optColumnClause:
     { $$ = std::vector<std::string>(); }
@@ -246,6 +262,7 @@ optColumnClause:
         $$ = std::vector<std::string>();
         std::move($2.begin(), $2.end(), std::back_inserter($$));
     }
+    ;
 
 insertList: 
     VALUES '(' exprList ')'  {
@@ -256,6 +273,7 @@ insertList:
         std::move($1.begin(), $1.end(), std::back_inserter($$));
         $$.push_back(std::move($4));
     }
+    ;
 
 fieldList:
         field
@@ -379,13 +397,13 @@ colList:
     }
     ;
 
-op:
-    '=' { $$ = EQ; }
-    | '<' { $$ = LT; }
-    | '>' { $$ = GT; }
-    | NEQ { $$ = NE; }
-    | LEQ { $$ = LE; }
-    | GEQ { $$ = GE; }
+compOp:
+    '=' { $$ = common::CompOp::EQ; }
+    | '<' { $$ = common::CompOp::LT; }
+    | '>' { $$ = common::CompOp::GT; }
+    | NEQ { $$ = common::CompOp::NE; }
+    | LEQ { $$ = common::CompOp::LE; }
+    | GEQ { $$ = common::CompOp::GE; }
     ;
 
 exprList:
@@ -399,16 +417,64 @@ exprList:
     }
 
 expr:
+    '(' expr ')' {
+        $$ = std::move($2);
+    } 
+    | valueExpr {
+        $$ = std::move($1);
+        $$->set_name(token_name(sql_string, &@1));
+    }
+    | unboundFieldExpr {
+        $$ = std::move($1);
+        $$->set_name(token_name(sql_string, &@$));
+    }
+    | compExpr {
+        $$ = std::move($1);
+        $$->set_name(token_name(sql_string, &@$));
+    }
+    | starExpr {
+        $$ = std::move($1);
+        $$->set_name(token_name(sql_string, &@$));
+    }
+    ;
+
+valueExpr:
     value {
         $$ = std::make_shared<ValueExpr>(*$1);
     }
-    | tbName '.' colName {
+
+unboundFieldExpr:
+    tbName '.' colName {
         $$ = std::make_shared<UnboundFieldExpr>($1, $3);
     }
     | colName {
         $$ = std::make_shared<UnboundFieldExpr>("", $1);
     }
 
+compExpr:
+    expr compOp expr {
+        $$ = std::make_shared<ComparisonExpr>(std::move($1), std::move($3), $2);
+    }
+
+conjunctionExpr:
+    expr {
+        $$ = std::move($1);
+    }
+    | expr AND expr {
+        $$ = std::make_shared<ConjunctionExpr>(std::move($1), std::move($3), common::ConjunctionType::AND);
+    }
+    | expr OR expr {
+        $$ = std::make_shared<ConjunctionExpr>(std::move($1), std::move($3), common::ConjunctionType::OR);
+    }
+
+starExpr:
+    '*' {
+        $$ = std::make_shared<StarExpr>();
+    }
+    | tbName '.' '*' {
+        $$ = std::make_shared<StarExpr>($1);
+    }
+    ;
 
 setClauses:
         setClause
@@ -422,7 +488,7 @@ setClauses:
     ;
 
 setClause:
-        colName '=' value
+        colName '=' expr
     {
         $$ = std::make_shared<SetClause>($1, $3);
     }
@@ -481,3 +547,14 @@ tbName: IDENTIFIER;
 
 colName: IDENTIFIER;
 %%
+
+extern void scan_string(const char *str, yyscan_t scanner);
+
+int sql_parse(const char *s, std::shared_ptr<ast::TreeNode>& sql_result) {
+  yyscan_t scanner;
+  yylex_init(&scanner);
+  scan_string(s, scanner);
+  int result = yyparse(s, sql_result, scanner);
+  yylex_destroy(scanner);
+  return result;
+}

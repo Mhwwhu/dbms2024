@@ -25,10 +25,10 @@ public:
         return get_value(exprs_[index], cell);
     }
 
-    RC spec_at(int index, ITupleCellSpec& spec) const override
+    RC spec_at(int index, std::shared_ptr<ITupleCellSpec>& spec) const override
     {
         if(index < 0 || index >= cell_num()) return RC::INVALID_ARGUMENT;
-        spec = ExprTupleCellSpec(exprs_[index]);
+        spec = std::make_shared<ExprTupleCellSpec>(exprs_[index]);
         return RC::SUCCESS;
     }
 

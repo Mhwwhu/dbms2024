@@ -14,16 +14,17 @@ See the Mulan PSL v2 for more details. */
 #include <memory>
 
 class RmFileHandle;
-class ConjunctionExpr;
+class Expression;
 class Context;
 
 class RecScan {
     const RmFileHandle *file_handle_;
     std::shared_ptr<RmRecord> record_;
-    std::shared_ptr<ConjunctionExpr> filter_;
+    std::shared_ptr<Expression> filter_;
+    Rid rid_;
     Context* context_;
 public:
-    RecScan(const RmFileHandle *file_handle, std::shared_ptr<ConjunctionExpr> filter);
+    RecScan(const RmFileHandle *file_handle, std::shared_ptr<Expression> filter);
 
     RC open(Context* ctx);
 

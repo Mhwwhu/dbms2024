@@ -3,7 +3,6 @@
 RC ChunkGetOper::open(Context* ctx)
 {
     if(children_.size() != 0) return RC::INTERNAL;
-    if(tuple_schema_.size() != chunk_.size()) return RC::INTERNAL;
     return RC::SUCCESS;
 }
 

@@ -44,6 +44,12 @@ RC SelectStmt::create(SmManager* manager, std::shared_ptr<ast::SelectNode> selec
         if(RM_FAIL(rc)) return rc;
         project_exprs.insert(project_exprs.end(), bound.begin(), bound.end());
     }
+    
+    // bind where子句表达式
+    if(select_node->where_conj) {
+        rc = FilterClause::create(manager, select_node->where_conj, where_clause, cur_context);
+        if(RM_FAIL(rc)) return rc;
+    }
 
     select_stmt = make_shared<SelectStmt>(join_tree, where_clause, having_clause, orderby_clause, project_exprs, groupby_exprs, limit);
     return RC::SUCCESS;

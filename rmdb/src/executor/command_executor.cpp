@@ -3,6 +3,8 @@
 #include "create_table_executor.h"
 #include "drop_table_executor.h"
 #include "show_tables_executor.h"
+#include "txn_commit_executor.h"
+#include "txn_begin_executor.h"
 #include "create_index_executor.h"
 
 RC CommandExecutor::execute(Context* context)
@@ -13,13 +15,11 @@ RC CommandExecutor::execute(Context* context)
     switch(stmt->type()) {
     case StmtType::CREATE_TABLE_STMT: {
         CreateTableExecutor executor;
-        rc = executor.execute(context);
-        break;
+        return executor.execute(context);
     }
     case StmtType::DROP_TABLE_STMT: {
         DropTableExecutor executor;
-        rc = executor.execute(context);
-        break;
+        return executor.execute(context);
     }
     case StmtType::CREATE_INDEX_STMT: {
         CreateIndexExecutor executor;
@@ -28,9 +28,19 @@ RC CommandExecutor::execute(Context* context)
     }
     case StmtType::SHOW_TABLES_STMT: {
         ShowTablesExecutor executor;
-        rc = executor.execute(context);
-        break;
+        return executor.execute(context);
+    }
+    case StmtType::TXN_BEGIN_STMT: {
+        TxnBeginExecutor executor;
+        return executor.execute(context);
+    }
+    case StmtType::TXN_COMMIT_STMT: {
+        TxnCommitExecutor executor;
+        return executor.execute(context);
+    }
+    default: {
+        LOG_ERROR("Invalid statement for executor, type = {}", (int)stmt->type());
+        return RC::INTERNAL;
     }
     }
-    return rc;
 }

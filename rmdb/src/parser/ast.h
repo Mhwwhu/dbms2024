@@ -26,6 +26,12 @@ struct TreeNode {
     virtual ~TreeNode() = default;  // enable polymorphism
 };
 
+struct ErrorNode : public TreeNode {
+    std::string error_msg;
+    int line;
+    int col;
+};
+
 struct Help : public TreeNode {
 };
 
@@ -105,36 +111,10 @@ struct Col : public TreeNode {
 
 struct SetClause : public TreeNode {
     std::string col_name;
-    std::shared_ptr<Value> val;
+    std::shared_ptr<Expression> expr;
 
-    SetClause(std::string col_name_, std::shared_ptr<Value> val_) :
-            col_name(std::move(col_name_)), val(std::move(val_)) {}
-};
-
-struct ConditionNode : public TreeNode {
-    virtual ~ConditionNode() = default;
-};
-
-struct CompareNode : public ConditionNode {
-    std::shared_ptr<Expression> left;
-    std::shared_ptr<Expression> right;
-    common::CompOp comp;
-
-    CompareNode(std::shared_ptr<Expression> left_, std::shared_ptr<Expression> right_, common::CompOp comp_)
-    : left(left_), right(right_), comp(comp_) {}
-};
-
-struct ConjunctionNode : public TreeNode {
-    std::shared_ptr<ConjunctionNode> left;
-    std::shared_ptr<ConjunctionNode> right;
-    std::shared_ptr<ConditionNode> condition;
-    common::ConjunctionType type;
-
-    ConjunctionNode(std::shared_ptr<ConditionNode> condition_)
-    : condition(condition), type(common::ConjunctionType::NONE) {}
-
-    ConjunctionNode(std::shared_ptr<ConjunctionNode> left_, std::shared_ptr<ConjunctionNode> right_, common::ConjunctionType type_)
-    : left(left_), right(right_), type(type_) {}
+    SetClause(std::string col_name_, std::shared_ptr<Expression> expr_) :
+            col_name(std::move(col_name_)), expr(std::move(expr_)) {}
 };
 
 struct OrderByUnitNode : public TreeNode {
@@ -165,16 +145,16 @@ struct SelectNode : public TreeNode {
     std::vector<std::shared_ptr<Expression>> project;
     std::shared_ptr<JoinNode> join_tree;
     std::vector<std::shared_ptr<Expression>> group_by;
-    std::shared_ptr<ConjunctionNode> having_conj;
-    std::shared_ptr<ConjunctionNode> where_conj;
+    std::shared_ptr<Expression> having_conj;
+    std::shared_ptr<Expression> where_conj;
     std::shared_ptr<OrderByNode> orderby;
     int limit = -1;
 
     SelectNode( const std::vector<std::shared_ptr<Expression>>& project_,
                 std::shared_ptr<JoinNode> join_tree_,
                 const std::vector<std::shared_ptr<Expression>>& group_by_,
-                std::shared_ptr<ConjunctionNode> having_conj_,
-                std::shared_ptr<ConjunctionNode> where_conj_,
+                std::shared_ptr<Expression> having_conj_,
+                std::shared_ptr<Expression> where_conj_,
                 std::shared_ptr<OrderByNode> orderby_,
                 int limit_)
                 : project(std::move(project_)), join_tree(std::move(join_tree_)), group_by(std::move(group_by_)),
@@ -198,12 +178,12 @@ struct VirtualTableNode : public TreeNode {
 struct JoinNode : public TreeNode {
     std::shared_ptr<JoinNode> left;
     std::shared_ptr<JoinNode> right;
-    std::shared_ptr<ConjunctionNode> conjunction;
+    std::shared_ptr<Expression> conjunction;
     std::shared_ptr<VirtualTableNode> vtable;
     common::JoinType type;
 
     JoinNode(std::shared_ptr<JoinNode> left_, std::shared_ptr<JoinNode> right_,
-            std::shared_ptr<ConjunctionNode> conjunction_, common::JoinType type_) :
+            std::shared_ptr<Expression> conjunction_, common::JoinType type_) :
             left(left_), right(right_), conjunction(conjunction_), type(type_) {}
 
     JoinNode(std::shared_ptr<VirtualTableNode> vtable_) : vtable(vtable_), type(common::JoinType::NONE) {}
@@ -211,32 +191,20 @@ struct JoinNode : public TreeNode {
 
 struct DeleteNode : public TreeNode {
     std::string tab_name;
+    std::shared_ptr<Expression> where_conj;
 
-    std::shared_ptr<ConjunctionNode> where_conj;
-
-    DeleteNode(std::string tab_name_, std::shared_ptr<ConjunctionNode> where_conj_) :
+    DeleteNode(std::string tab_name_, std::shared_ptr<Expression> where_conj_) :
             tab_name(std::move(tab_name_)), where_conj(std::move(where_conj_)) {}
-}
-// struct SelectNode : public TreeNode {
-//     std::vector<std::shared_ptr<Col>> cols;
-//     std::vector<std::string> tabs;
-//     std::vector<std::shared_ptr<BinaryExpr>> conds;
-//     std::vector<std::shared_ptr<JoinExpr>> jointree;
+};
 
-    
-//     bool has_sort;
-//     std::shared_ptr<OrderBy> order;
+struct UpdateNode : public TreeNode {
+    std::string tab_name;
+    std::vector<std::shared_ptr<SetClause>> set_clause;
+    std::shared_ptr<Expression> filter;
 
-
-//     SelectNode(std::vector<std::shared_ptr<Col>> cols_,
-//                std::vector<std::string> tabs_,
-//                std::vector<std::shared_ptr<BinaryExpr>> conds_,
-//                std::shared_ptr<OrderBy> order_) :
-//             cols(std::move(cols_)), tabs(std::move(tabs_)), conds(std::move(conds_)), 
-//             order(std::move(order_)) {
-//                 has_sort = (bool)order;
-//             }
-// };
+    UpdateNode(const std::string& tab_name_, const std::vector<std::shared_ptr<SetClause>>& set_clause_ , std::shared_ptr<Expression> filter_)
+    : tab_name(tab_name_), set_clause(set_clause_), filter(std::move(filter_)) {}
+};
 
 // // set enable_nestloop
 // struct SetNode : public TreeNode {
@@ -279,15 +247,6 @@ struct SemValue {
     std::shared_ptr<SetClause> sv_set_clause;
     std::vector<std::shared_ptr<SetClause>> sv_set_clauses;
 
-    std::shared_ptr<ConjunctionNode> sv_conjunction;
-    std::vector<std::shared_ptr<ConjunctionNode>> sv_conjunctions;
-
-    std::shared_ptr<ConditionNode> sv_cond;
-    std::vector<std::shared_ptr<ConditionNode>> sv_conds;
-
-    std::shared_ptr<CompareNode> sv_compare;
-    std::vector<std::shared_ptr<CompareNode>> sv_compares;
-
     std::shared_ptr<OrderByNode> sv_orderby;
 
     std::shared_ptr<JoinNode> sv_join;
@@ -296,9 +255,6 @@ struct SemValue {
 
     common::SetKnobType sv_setKnobType;
 };
-
-extern std::shared_ptr<ast::TreeNode> parse_tree;
-
 }
 
 #define YYSTYPE ast::SemValue

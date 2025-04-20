@@ -20,17 +20,23 @@ See the Mulan PSL v2 for more details. */
 #include "plan/planner.h"
 #include "plan/plan.h"
 #include "operator/operator_generator.h"
+#include "optimize_rule.h"
+#include "index_select_optimize_rule.h"
+#include "optimize_context.h"
 
 class Optimizer {
    private:
     SmManager *sm_manager_;
     Planner *planner_;
     OperatorGenerator* operator_generator_;
+    std::vector<std::unique_ptr<OptimizeRule>> optimize_rules_;
 
    public:
     Optimizer(SmManager *sm_manager,  Planner *planner, OperatorGenerator* operator_generator) 
         : sm_manager_(sm_manager),  planner_(planner), operator_generator_(operator_generator)
-        {}
+        {
+            optimize_rules_.push_back(std::make_unique<IndexSelectOptimizeRule>());
+        }
     
     std::shared_ptr<Plan> plan_query(std::shared_ptr<IStmt> stmt, Context *context) {
         // if (auto x = std::dynamic_pointer_cast<ast::Help>(stmt->parse)) {
@@ -66,4 +72,8 @@ class Optimizer {
     // TODO: 在该方法中完成plan和operator的生成，以及优化。plan和operator仅限于DML语句，其他语句则由下一个阶段的executor注入stmt执行。
     RC handle_request(Context* context);
 
+private:
+    RC rewrite(std::shared_ptr<Plan>& plan);
+
+    RC optimize(std::shared_ptr<Plan>& plan);
 };

@@ -282,4 +282,6 @@ RC DiskManager::write_log(char *log_data, int size) {
     if (bytes_write != size) {
         return RC::IOERR_WRITE;
     }
+
+    return rc;
 }

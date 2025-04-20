@@ -24,7 +24,7 @@ public:
 	 */
 	virtual RC cell_at(int index, Value& cell) const = 0;
 
-	virtual RC spec_at(int index, ITupleCellSpec& spec) const = 0;
+	virtual RC spec_at(int index, std::shared_ptr<ITupleCellSpec>& spec) const = 0;
 
 	/**
 	 * @brief 根据cell的描述，获取cell的值

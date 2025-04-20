@@ -73,6 +73,10 @@
         "executor": "cpp",
         "netfwd": "cpp",
         "future": "cpp",
-        "cerrno": "cpp"
+        "cerrno": "cpp",
+        "bitset": "cpp",
+        "complex": "cpp",
+        "regex": "cpp",
+        "source_location": "cpp"
     }
 }

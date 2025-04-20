@@ -73,22 +73,28 @@ RC UnsafePrinter::write_result_internal(Context* ctx)
         return RC::INTERNAL;
     }
     int cell_num = schema->cell_num();
+    const char* delim;
     for(int i = 0; i < cell_num; i++) {
         auto spec = schema->cell_at(i);
         string name = spec->name();
-        if(i != 0) {
-            const char* delim = " | ";
-            rc = writer_->writen(delim, strlen(delim));
-            if(RM_FAIL(rc)) {
-                oper->close();
-                return rc;
-            }
+        if(i == 0) delim = "| ";
+        else delim = " | ";
+        rc = writer_->writen(delim, strlen(delim));
+        if(RM_FAIL(rc)) {
+            oper->close();
+            return rc;
         }
         rc = writer_->writen(name.c_str(), name.size());
         if(RM_FAIL(rc)) {
             oper->close();
             return rc;
         }
+    }
+    delim = " |";
+    rc = writer_->writen(delim, strlen(delim));
+    if(RM_FAIL(rc)) {
+        oper->close();
+        return rc;
     }
 
     if(cell_num > 0) {
@@ -121,14 +127,14 @@ RC UnsafePrinter::write_tuple_result(Context* ctx)
         tuple = oper->current_tuple();
         int cell_num = tuple->cell_num();
 
+        const char* delim;
         for(int i = 0; i < cell_num; i++) {
-            if(i != 0) {
-                const char* delim = " | ";
-                rc = writer_->writen(delim, strlen(delim));
-                if(RM_FAIL(rc)) {
-                    oper->close();
-                    return rc;
-                }
+            if(i == 0) delim = "| ";
+            else delim = " | ";
+            rc = writer_->writen(delim, strlen(delim));
+            if(RM_FAIL(rc)) {
+                oper->close();
+                return rc;
             }
 
             Value val;
@@ -144,6 +150,13 @@ RC UnsafePrinter::write_tuple_result(Context* ctx)
                 return rc;
             }
         }
+        delim = " |";
+        rc = writer_->writen(delim, strlen(delim));
+        if(RM_FAIL(rc)) {
+            oper->close();
+            return rc;
+        }
+        
         rc = writer_->writen("\n", 1);
         if(RM_FAIL(rc)) {
             oper->close();

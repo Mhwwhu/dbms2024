@@ -14,6 +14,9 @@ enum OperatorType {
     INSERT_OPER,
     CHUNK_GET_OPER,
     TABLE_SCAN_OPER,
+    FILTER_OPER,
+    DELETE_OPER,
+    UPDATE_OPER,
 };
 
 class Operator {

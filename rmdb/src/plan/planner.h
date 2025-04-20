@@ -28,6 +28,8 @@ See the Mulan PSL v2 for more details. */
 #include "analyze/stmt/insert_stmt.h"
 #include "analyze/stmt/select_stmt.h"
 #include "analyze/stmt/delete_stmt.h"
+#include "analyze/stmt/update_stmt.h"
+
 class Planner {
    private:
     SmManager *sm_manager_;
@@ -60,6 +62,7 @@ class Planner {
    RC create_plan(std::shared_ptr<InsertStmt> stmt, std::shared_ptr<Plan>& plan);
    RC create_plan(std::shared_ptr<SelectStmt> stmt, std::shared_ptr<Plan>& plan);
    RC create_plan(std::shared_ptr<DeleteStmt> stmt, std::shared_ptr<Plan>& plan);
+   RC create_plan(std::shared_ptr<UpdateStmt> stmt, std::shared_ptr<Plan>& plan);
 
     /**
      * todo

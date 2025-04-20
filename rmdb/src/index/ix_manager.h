@@ -54,7 +54,7 @@ class IxManager {
         auto ix_name = get_index_name(filename, index_cols);
         return disk_manager_->is_file(ix_name);
     }
-    RC  make_key(shared_ptr<RmRecord>& record , const vector<ColMeta>& col_metas , vector<char>& key){
+    RC  make_key(shared_ptr<RmRecord> record , const vector<ColMeta>& col_metas , vector<char>& key){
 
         RC rc = RC::SUCCESS;
         int size ;

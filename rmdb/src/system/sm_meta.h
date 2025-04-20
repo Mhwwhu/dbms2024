@@ -69,6 +69,8 @@ struct ColMeta : public VirtualFieldMeta{
     : VirtualFieldMeta(name_, type_, len_, common::VirtualFieldType::TABLE_COL),
      name(name_), type(type_), len(len_), offset(offset_), id(id_), nullable(nullable_) {}
 
+    bool operator<(const ColMeta& other) const { return name < other.name; }
+
     Json::Value to_json() 
     {
         Json::Value col_value;
@@ -310,11 +312,11 @@ struct TabMeta : public VirtualTabMeta{
 class DbMeta {
     friend class SmManager;
 
-   private:
+private:
     std::string name_;                      // 数据库名称
     std::map<std::string, TabMeta> tabs_;   // 数据库中包含的表
 
-   public:
+public:
     // DbMeta(std::string name) : name_(name) {}
 
     /* 判断数据库中是否存在指定名称的表 */

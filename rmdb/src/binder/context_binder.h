@@ -6,6 +6,7 @@
 #include <set>
 
 class BinderContext;
+class VirtualTabMeta;
 
 // 上下文绑定器，用于将表达式及其他可能需要绑定的对象绑定到对应上下文
 class ContextBinder {
@@ -19,6 +20,10 @@ private:
     RC bind_field_expr(std::shared_ptr<Expression> expr, std::vector<std::shared_ptr<Expression>>& bound_exprs);
     RC bind_value_expr(std::shared_ptr<Expression> expr, std::vector<std::shared_ptr<Expression>>& bound_exprs);
     RC bind_conjunction_expr(std::shared_ptr<Expression> expr, std::vector<std::shared_ptr<Expression>>& bound_exprs);
+    RC bind_comp_expr(std::shared_ptr<Expression> expr, std::vector<std::shared_ptr<Expression>>& bound_exprs);
+    RC bind_unbound_star_expr(std::shared_ptr<Expression> expr, std::vector<std::shared_ptr<Expression>>& bound_exprs);
+
+    void wildcard_fields(std::shared_ptr<VirtualTabMeta> vtable, std::vector<std::shared_ptr<Expression>>& bound_exprs);
 private:
     std::shared_ptr<const BinderContext> context_;
 };
