@@ -8,7 +8,6 @@ RC DropTableExecutor::execute(Context* context)
 
     auto sm_manager = context->sm_manager_;
 
-    sm_manager->drop_table(stmt->table_name(), context);
+    return sm_manager->drop_table(stmt->table_name(), context);
 
-    return RC::SUCCESS;
 }

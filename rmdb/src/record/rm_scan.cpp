@@ -22,8 +22,7 @@ RC RecScan::open(Context* ctx) {
     context_ = ctx;
     record_ = std::make_shared<RmRecord>();
     record_->rid.page_no = INVALID_PAGE_ID;
-    // Todo:
-    // 初始化file_handle和rid（指向第一个存放了记录的位置）
+
     return RC::SUCCESS;
 }
 

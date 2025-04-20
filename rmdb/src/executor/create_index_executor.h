@@ -4,7 +4,7 @@
 
 class Context;
 
-class ShowTablesExecutor  {
+class CreateIndexExecutor {
 public:
     RC execute(Context* context);
 };

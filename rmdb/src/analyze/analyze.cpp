@@ -15,6 +15,7 @@ See the Mulan PSL v2 for more details. */
 #include "stmt/delete_stmt.h"
 #include "stmt/select_stmt.h"
 #include "stmt/show_tables_stmt.h"
+#include "stmt/create_index_stmt.h"
 #include "common/context.h"
 
 /**
@@ -101,6 +102,10 @@ RC Analyze::do_analyze(std::shared_ptr<ast::TreeNode> root, std::shared_ptr<IStm
     }
     if(auto node = std::dynamic_pointer_cast<ast::DropTable>(root)) {
         rc = DropTableStmt::create(sm_manager_, node, stmt);
+        return rc;
+    }
+    if(auto node = std::dynamic_pointer_cast<ast::CreateIndex>(root)) {
+        rc = CreateIndexStmt::create(sm_manager_, node, stmt);
         return rc;
     }
     if(auto node = std::dynamic_pointer_cast<ast::DeleteNode>(root)) {

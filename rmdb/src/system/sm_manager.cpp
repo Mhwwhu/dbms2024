@@ -244,8 +244,64 @@ RC SmManager::drop_table(const std::string& tab_name, Context* context) {
  * @param {vector<string>&} col_names 索引包含的字段名称
  * @param {Context*} context
  */
-RC SmManager::create_index(const std::string& tab_name, const std::vector<std::string>& col_names, Context* context) {
-    return RC::UNIMPLEMENTED;
+RC SmManager::create_index( TabMeta& tab_meta, const std::vector<ColMeta>& col_metas, Context* context) {
+    RC rc = RC::SUCCESS;
+    std::string tab_name = tab_meta.name;
+
+    // 生成索引文件名
+
+    std::string index_file_name = db_.name_ +'/' + tab_name;
+    std::string index_name = ix_manager_->get_index_name(index_file_name, col_metas);
+    // 创建索引文件
+    if (RM_FAIL(rc = ix_manager_->create_index(index_name, col_metas))) {
+        return rc;
+    }
+    // 打开索引文件
+    std::unique_ptr<IxIndexHandle> index_handle;
+    if (RM_FAIL(rc = ix_manager_->open_index(index_name,index_handle))) {
+        return rc;
+    }
+
+    IndexMeta index_meta;
+    index_meta.name = index_name;
+    index_meta.cols = col_metas;
+    tab_meta.indexes.emplace_back(index_meta);
+
+    // 将索引句柄添加到 ihs_ 中
+    ihs_.emplace(index_name, std::move(index_handle));
+
+    // 刷写元数据到磁盘
+    if (RM_FAIL(rc = flush_meta())) {
+        return rc;
+    }
+
+    // 插入表中已有的记录到索引中
+    RmFileHandle* file_handle = fhs_.at(tab_name).get();
+    RecScan scan( file_handle, nullptr);
+    if(RM_FAIL(rc = scan.open(context))){
+        return rc;
+    };
+    while (!scan.is_end()) {
+        RmRecord record;
+        if (RM_FAIL(rc = file_handle->get_record(scan.rid(), &record))) {
+            scan.close();
+            return rc;
+        }
+        std::vector<Value> values;
+        for (const auto& col : index_cols) {
+            Value value;
+            memcpy(&value, record.data + col.offset, col.len);
+            values.push_back(value);
+        }
+        if (RM_FAIL(rc = ihs_.at(index_key)->insert_entry(values, scan.rid()))) {
+            scan.close();
+            return rc;
+        }
+        scan.next();
+    }
+    scan.close();
+
+    return RC::SUCCESS;
 }
 
 /**

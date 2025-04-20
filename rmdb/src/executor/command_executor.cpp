@@ -3,6 +3,7 @@
 #include "create_table_executor.h"
 #include "drop_table_executor.h"
 #include "show_tables_executor.h"
+#include "create_index_executor.h"
 
 RC CommandExecutor::execute(Context* context)
 {
@@ -17,6 +18,11 @@ RC CommandExecutor::execute(Context* context)
     }
     case StmtType::DROP_TABLE_STMT: {
         DropTableExecutor executor;
+        rc = executor.execute(context);
+        break;
+    }
+    case StmtType::CREATE_INDEX_STMT: {
+        CreateIndexExecutor executor;
         rc = executor.execute(context);
         break;
     }

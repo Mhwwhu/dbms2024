@@ -70,8 +70,8 @@ class SmManager {
 
     RC drop_table(const std::string& tab_name, Context* context);
 
-    RC create_index(const std::string& tab_name, const std::vector<std::string>& col_names, Context* context);
-
+    // RC create_index(const std::string& tab_name, const std::vector<std::string>& col_names, Context* context);
+    RC create_index( TabMeta& tab_name, const std::vector<ColMeta>& col_names, Context* context);
     RC drop_index(const std::string& tab_name, const std::vector<std::string>& col_names, Context* context);
     
     RC drop_index(const std::string& tab_name, const std::vector<ColMeta>& col_names, Context* context);
