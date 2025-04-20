@@ -14,7 +14,7 @@
 
 std::string token_name(const char *sql_string, YYLTYPE *llocp)
 {
-    return std::string(sql_string + llocp->first_column - 1, llocp->last_column - llocp->first_column + 1);
+    return std::string(sql_string + llocp->first_column - 1, llocp->last_column - llocp->first_column);
 }
 
 int yyerror(YYLTYPE *locp, const char* s, std::shared_ptr<ast::TreeNode>& sql_result, yyscan_t scanner, const char* msg) {

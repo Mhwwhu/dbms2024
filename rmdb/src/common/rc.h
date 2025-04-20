@@ -82,6 +82,7 @@
   DEFINE_RC(FIELD_BIND_ERR)              \
   DEFINE_RC(IMPLICIT_INSERT_FIELD)       \
   DEFINE_RC(OPERATOR_NOT_OPENED)         \
+  DEFINE_RC(TXN_STATE_ERR)               \
   DEFINE_RC(UNSUPPORTED)
 
 enum class RC

@@ -17,6 +17,7 @@ See the Mulan PSL v2 for more details. */
 #include "recovery/log_manager.h"
 #include "concurrency/lock_manager.h"
 #include "system/sm_manager.h"
+#include "common/rc.h"
 
 /* 系统采用的并发控制算法，当前题目中要求两阶段封锁并发控制算法 */
 enum class ConcurrencyMode { TWO_PHASE_LOCKING = 0, BASIC_TO };
@@ -34,13 +35,13 @@ public:
 
     Transaction* begin(Transaction* txn, LogManager* log_manager);
 
-    void commit(Transaction* txn, LogManager* log_manager);
+    RC commit(Transaction* txn, LogManager* log_manager);
 
-    void abort(Transaction* txn, LogManager* log_manager);
+    RC abort(Transaction* txn, LogManager* log_manager);
 
     ConcurrencyMode get_concurrency_mode() { return concurrency_mode_; }
 
-    void set_concurrency_mode(ConcurrencyMode concurrency_mode) { concurrency_mode_ = concurrency_mode; }
+    RC set_concurrency_mode(ConcurrencyMode concurrency_mode) { concurrency_mode_ = concurrency_mode; }
 
     LockManager* get_lock_manager() { return lock_manager_; }
 

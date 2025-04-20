@@ -35,7 +35,9 @@ Transaction * TransactionManager::begin(Transaction* txn, LogManager* log_manage
     }
 
     txn_map[txn->get_transaction_id()] = txn;
-    txn->set_state(TransactionState::DEFAULT);
+    txn->set_state(TransactionState::GROWING);
+
+    LOG_INFO("Begin transaction, id = {}", txn->get_transaction_id());
     
     return txn;
 }
@@ -45,7 +47,7 @@ Transaction * TransactionManager::begin(Transaction* txn, LogManager* log_manage
  * @param {Transaction*} txn 需要提交的事务
  * @param {LogManager*} log_manager 日志管理器指针
  */
-void TransactionManager::commit(Transaction* txn, LogManager* log_manager) {
+RC TransactionManager::commit(Transaction* txn, LogManager* log_manager) {
     // Todo:
     // 1. 如果存在未提交的写操作，提交所有的写操作
     // 2. 释放所有锁
@@ -53,6 +55,13 @@ void TransactionManager::commit(Transaction* txn, LogManager* log_manager) {
     // 4. 把事务日志刷入磁盘中
     // 5. 更新事务状态
 
+    
+    // 更新状态为COMMITTED
+    txn->set_state(TransactionState::COMMITTED);
+
+    LOG_INFO("Transaction {} committed", txn->get_transaction_id());
+    
+    return RC::SUCCESS;
 }
 
 /**
@@ -60,7 +69,7 @@ void TransactionManager::commit(Transaction* txn, LogManager* log_manager) {
  * @param {Transaction *} txn 需要回滚的事务
  * @param {LogManager} *log_manager 日志管理器指针
  */
-void TransactionManager::abort(Transaction * txn, LogManager *log_manager) {
+RC TransactionManager::abort(Transaction * txn, LogManager *log_manager) {
     // Todo:
     // 1. 回滚所有写操作
     // 2. 释放所有锁

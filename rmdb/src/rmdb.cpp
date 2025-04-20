@@ -170,11 +170,14 @@ void *client_handler(void *sock_fd) {
         
         context->sql = data_recv;
         try {
+            std::cout << "txn id: " << context->txn_->get_transaction_id() << std::endl;
             handle_sql(context);
             RC rc = client_printer->write_result(context);
             if(RM_FAIL(rc)) {
                 LOG_ERROR("Getting result failed, rc = {}", strrc(rc));
             }
+
+            // TODO 如果执行失败，那么事务也需要回滚
             
         } catch (TransactionAbortException &e) {
             // 事务需要回滚，需要把abort信息返回给客户端并写入output.txt文件中
