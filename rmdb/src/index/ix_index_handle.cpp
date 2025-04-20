@@ -249,8 +249,8 @@ std::pair<IxNodeHandle *, bool> IxIndexHandle::find_leaf_page(const char *key, O
     // 1. 获取根节点
     // 2. 从根节点开始不断向下查找目标key
     // 3. 找到包含该key值的叶子结点停止查找，并返回叶子节点
-
-    std::lock_guard<std::mutex> root_lock(root_latch_);//对根节点加锁，保持查找路径的一致性
+    std::scoped_lock lock{root_latch_};
+    //std::lock_guard<std::mutex> root_lock(root_latch_);//对根节点加锁，保持查找路径的一致性
     bool root_is_latched = true;
     IxNodeHandle *current_node = fetch_node(file_hdr_->root_page_);
 
@@ -822,10 +822,11 @@ Iid IxIndexHandle::leaf_begin() const {
  * @note pin the page, remember to unpin it outside!
  */
 IxNodeHandle *IxIndexHandle::fetch_node(int page_no) const {
-    // Page *page = buffer_pool_manager_->fetch_page(PageId{fd_, page_no});
-    // IxNodeHandle *node = new IxNodeHandle(file_hdr_, page);
+    Page *page ;
+    buffer_pool_manager_->fetch_page(PageId{fd_, page_no},page);
+    IxNodeHandle *node = new IxNodeHandle(file_hdr_, page);
     
-    // return node;
+    return node;
 }
 
 /**

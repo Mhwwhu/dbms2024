@@ -116,11 +116,19 @@ RC SmManager::close_db() {
 
     // 将table落盘
     for(auto table : db_.tabs_) {
+        for(auto idx : table.second.indexes)
+        {
+            if(RM_FAIL(rc = ix_manager_->close_index(ihs_[idx.name].get()))){
+                LOG_ERROR("close index {} failed", idx.name);
+                return rc;
+            };
+        }
         rc = rm_manager_->close_file(fhs_[table.first].get());
-        if(RM_FAIL(rc)) return rc;
+        if(RM_FAIL(rc)) {
+            LOG_ERROR("close file {} failed", table.first);
+            return rc;
+        }
     }
-
-    //TODO: 将index落盘
 
     return RC::SUCCESS;
 }
@@ -175,6 +183,8 @@ RC SmManager::create_table(const std::string& tab_name, const std::vector<ColDef
     int curr_offset = 0;
     TabMeta tab;
     tab.name = tab_name;
+    tab.alias_name = tab_name;
+    tab.type = common::VirtualTabType::TABLE;
     int id = 0;
     for (auto &col_def : col_defs) {
         ColMeta col(col_def.name,
@@ -188,6 +198,10 @@ RC SmManager::create_table(const std::string& tab_name, const std::vector<ColDef
         id++;
         tab.cols.push_back(col);
     }
+    for(auto col : tab.cols) {
+        tab.vcols.push_back(std::make_shared<ColMeta>(col));
+    }
+    curr_offset += col_defs.size() / 8 + 1;
     // Create & open record file
     int record_size = curr_offset;  // record_size就是col meta所占的大小（表的元数据也是以记录的形式进行存储的）
     string tab_path = db_.name_ + '/' + tab_name;
@@ -256,10 +270,7 @@ RC SmManager::create_index( TabMeta& tab_meta, const std::vector<ColMeta>& col_m
     IndexMeta index_meta;
     index_meta.name = index_name;
     index_meta.cols = col_metas;
-    tab_meta.indexes.emplace_back(index_meta);
-
-    // 将索引句柄添加到 ihs_ 中
-    ihs_.emplace(index_name, std::move(index_handle));
+    db_.tabs_.at(tab_name).indexes.emplace_back(index_meta);
 
     // 刷写元数据到磁盘
     if (RM_FAIL(rc = flush_meta())) {
@@ -285,6 +296,8 @@ RC SmManager::create_index( TabMeta& tab_meta, const std::vector<ColMeta>& col_m
         };
         
     }
+    // 将索引句柄添加到 ihs_ 中
+    ihs_.emplace(index_name, std::move(index_handle));
     scan.close();
     return RC::SUCCESS;
 }

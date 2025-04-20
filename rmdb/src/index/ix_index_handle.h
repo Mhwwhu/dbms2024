@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details. */
 #include "ix_defs.h"
 #include "transaction/transaction.h"
 #include "common/rc.h"
+#include "common/value.h"
 
 enum class Operation { FIND = 0, INSERT, DELETE };  // 三种操作：查找、插入、删除
 
@@ -22,23 +23,9 @@ static const bool binary_search = false;
  * 单列的相等比较
  */
 inline int ix_compare(const char *a, const char *b, AttrType type, int col_len) {
-    // switch (type) {
-    //     case AttrType::INTS: {
-    //         int ia = *(int *)a;
-    //         int ib = *(int *)b;
-    //         return (ia < ib) ? -1 : ((ia > ib) ? 1 : 0);
-    //     }
-    //     case AttrType::FLOATS: {
-    //         float fa = *(float *)a;
-    //         float fb = *(float *)b;
-    //         return (fa < fb) ? -1 : ((fa > fb) ? 1 : 0);
-    //     }
-    //     case AttrType::CHARS:
-    //         return memcmp(a, b, col_len);
-    //     default:
-    //         throw InternalError("Unexpected data type");
-    // }
-    return 0;
+    Value left(type, a, col_len);
+    Value right(type, b, col_len);
+    return left.compare(right);
 }
 
 /**

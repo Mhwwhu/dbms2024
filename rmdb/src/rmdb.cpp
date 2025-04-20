@@ -78,7 +78,7 @@ RC handle_sql(Context *context) {
     // 语法解析
     rc = parser->handle_request(context);
     if(RM_FAIL(rc)) {
-        LOG_ERROR("Failed to do parse");
+        LOG_ERROR("Failed to do parse, rc = {}", strrc(rc));
         context->sql_result.set_return_code(rc);
         return rc;
     }
@@ -86,15 +86,16 @@ RC handle_sql(Context *context) {
     // 语义分析
     rc = analyze->handle_request(context);
     if(RM_FAIL(rc)) {
-        LOG_ERROR("Failed to do analyze");
+        LOG_ERROR("Failed to do analyze, rc = {}", strrc(rc));
         context->sql_result.set_return_code(rc);
         return rc;
     }
 
+
     // 优化器
     rc = optimizer->handle_request(context);
     if(RM_FAIL(rc)) {
-        LOG_ERROR("Failed to do optimize");
+        LOG_ERROR("Failed to do optimize, rc = {}", strrc(rc));
         context->sql_result.set_return_code(rc);
         return rc;
     }
@@ -102,7 +103,7 @@ RC handle_sql(Context *context) {
     // 执行器
     rc = portal->handle_request(context);
     if(RM_FAIL(rc)) {
-        LOG_ERROR("Failed to do execute");
+        LOG_ERROR("Failed to do execute, rc = {}", strrc(rc));
         context->sql_result.set_return_code(rc);
         return rc;
     }
@@ -276,6 +277,7 @@ void start_server() {
 
     // Clear
     std::cout << " Try to close all client-connection.\n";
+    std::cout << sockfd_server << std::endl;
     int ret = shutdown(sockfd_server, SHUT_WR);  // shut down the all or part of a full-duplex connection.
     if(ret == -1) { printf("%s\n", strerror(errno)); }
 //    assert(ret != -1);

@@ -18,6 +18,7 @@ See the Mulan PSL v2 for more details. */
 #include "ix_index_handle.h"
 #include "record/rm_defs.h"
 
+
 class IxManager {
    private:
     DiskManager *disk_manager_;
@@ -54,14 +55,15 @@ class IxManager {
         auto ix_name = get_index_name(filename, index_cols);
         return disk_manager_->is_file(ix_name);
     }
-    RC  make_key(shared_ptr<RmRecord> record , const vector<ColMeta>& col_metas , vector<char>& key){
+
+    RC  make_key(std::shared_ptr<RmRecord> record , const std::vector<ColMeta>& col_metas , std::vector<char>& key){
 
         RC rc = RC::SUCCESS;
         int size ;
         for(auto col :col_metas){
             size+=col.len;
         }
-        size+=sizeof(Rid);
+        //size+=sizeof(Rid);
         
         key.resize(size);
 
@@ -71,10 +73,11 @@ class IxManager {
             memcpy(key.data() + offset, record->data + col.offset, col.len);
             offset+=col.len;
         }
-        memcpy(key.data() + offset , &(record->rid) , sizeof(Rid));
+       // memcpy(key.data() + offset , &(record->rid) , sizeof(Rid));
 
         return rc;
     }
+
    RC create_index(const std::string &ix_name, const std::vector<ColMeta>& index_cols) {
         // std::string ix_name = get_index_name(filename, index_cols);
         // Create index file
@@ -92,6 +95,9 @@ class IxManager {
         for(auto& col: index_cols) {
             col_tot_len += col.len;
         }
+
+        //col_tot_len += sizeof(Rid);
+
         if (col_tot_len > IX_MAX_COL_LEN) {
             return RC::INTERNAL;
             // throw InvalidColLengthError(col_tot_len);
@@ -185,12 +191,14 @@ class IxManager {
     //     return nullptr;
     // }
 
-    void close_index(const IxIndexHandle *ih) {
+    RC close_index(const IxIndexHandle *ih) {
+        RC rc = RC::SUCCESS;
         char* data = new char[ih->file_hdr_->tot_len_];
         ih->file_hdr_->serialize(data);
         disk_manager_->write_page(ih->fd_, IX_FILE_HDR_PAGE, data, ih->file_hdr_->tot_len_);
         // 缓冲区的所有页刷到磁盘，注意这句话必须写在close_file前面
         buffer_pool_manager_->flush_all_pages(ih->fd_);
         disk_manager_->close_file(ih->fd_);
+        return rc;
     }
 };

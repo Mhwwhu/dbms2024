@@ -65,8 +65,8 @@ RC RmFileHandle::insert_record(char *buf, Rid& rid, Context *context) {
     if(RM_FAIL(rc)) return rc;
 
     auto bitmap = handle.bitmap;
-    auto bitmap_size = file_hdr_.bitmap_size;
-    int slot_no = Bitmap::first_bit(false, bitmap, bitmap_size);
+    auto max_records_num = file_hdr_.num_records_per_page;
+    int slot_no = Bitmap::first_bit(false, bitmap, max_records_num);
     char* slot = handle.get_slot(slot_no);
 
     memcpy(slot, buf, file_hdr_.record_size);
@@ -74,7 +74,7 @@ RC RmFileHandle::insert_record(char *buf, Rid& rid, Context *context) {
     Bitmap::set(bitmap, slot_no);
     
     // 如果插入之后页面已满，则需要更新file_hdr_
-    if(Bitmap::first_bit(false, bitmap, bitmap_size) == bitmap_size) {
+    if(Bitmap::first_bit(false, bitmap, max_records_num) == max_records_num) {
         file_hdr_.first_free_page_no = handle.page_hdr->next_free_page_no;
     }
 
