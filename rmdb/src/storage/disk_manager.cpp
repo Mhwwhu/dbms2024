@@ -48,7 +48,6 @@ RC DiskManager::write_page(int fd, page_id_t page_no, const char *offset, int nu
  * @param {int} num_bytes 读取的数据量大小
  */
 RC DiskManager::read_page(int fd, page_id_t page_no, char *offset, int num_bytes) {
-    // Todo:
     // 1.lseek()定位到文件头，通过(fd,page_no)可以定位指定页面及其在磁盘文件中的偏移量
     // 2.调用read()函数
     // 注意read返回值与num_bytes不等时，throw InternalError("DiskManager::read_page Error");
@@ -158,6 +157,7 @@ RC DiskManager::open_file(const std::string &path, int& fd) {
         return RC::FILE_NOT_EXIST;
     }
     if(path2fd_.find(path) != path2fd_.end()) {
+        LOG_ERROR("File {} is already opened", path);
         return RC::FILE_NOT_CLOSED;
     }
     fd = open(path.c_str(), O_RDWR);

@@ -66,7 +66,7 @@ class IxNodeHandle {
 
     void set_size(int size) { page_hdr->num_key = size; }
 
-    int get_max_size() { return file_hdr->btree_order_ + 1; }
+    int get_max_size() { return file_hdr->btree_order_ ; }
 
     int get_min_size() { return get_max_size() / 2; }
 
@@ -143,15 +143,21 @@ class IxNodeHandle {
      * @param child
      * @return int
      */
-    int find_child(IxNodeHandle *child) {
+    RC find_child(IxNodeHandle *child , int& idx) {
+        RC rc = RC::SUCCESS;
         int rid_idx;
         for (rid_idx = 0; rid_idx < page_hdr->num_key; rid_idx++) {
             if (get_rid(rid_idx)->page_no == child->get_page_no()) {
                 break;
             }
         }
-        assert(rid_idx < page_hdr->num_key);
-        return rid_idx;
+        idx = rid_idx;
+        if(idx > page_hdr->num_key) {
+            LOG_WARN("IN INDEX : child not found in parent");
+            return RC::INTERNAL;
+        }
+        return rc;
+        
     }
 };
 
@@ -181,7 +187,7 @@ class IxIndexHandle {
 
     IxNodeHandle *split(IxNodeHandle *node);
 
-    void insert_into_parent(IxNodeHandle *old_node, const char *key, IxNodeHandle *new_node, Transaction *transaction);
+    RC insert_into_parent(IxNodeHandle *old_node, const char *key, IxNodeHandle *new_node, Transaction *transaction);
 
     // for delete
     bool delete_entry(const char *key, Transaction *transaction);

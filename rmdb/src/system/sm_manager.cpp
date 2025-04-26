@@ -93,6 +93,19 @@ RC SmManager::open_db(const std::string& db_name) {
         fhs_.emplace(pair.first, std::move(rm_file_handle));
     }
     // TODO: 初始化ihs_
+    for (auto& table_pair : db_.tabs_) {
+        const std::string& tab_name = table_pair.first;
+        const TabMeta& tab_meta = table_pair.second;
+        for (const auto& index_meta : tab_meta.indexes) {
+            std::string index_file_name = db_name + '/' + tab_name;
+            std::string index_name = ix_manager_->get_index_name(index_file_name, index_meta.cols);
+            std::unique_ptr<IxIndexHandle> index_handle;
+            if (RM_FAIL(rc = ix_manager_->open_index(index_name, index_handle))) {
+                return rc;
+            }
+            ihs_.emplace(index_name, std::move(index_handle));
+        }
+    }
 
     return RC::SUCCESS;
 }

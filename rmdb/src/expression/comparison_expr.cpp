@@ -42,7 +42,8 @@ RC ComparisonExpr::get_value(const ITuple& tuple, Value& val) const
         val = Value(result > 0);
         break;
     case GE:
-        val = Value(result > 0);
+        val = Value(result >= 0);
+        break;
     default:
         return RC::INTERNAL;
     }

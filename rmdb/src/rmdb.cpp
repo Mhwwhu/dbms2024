@@ -278,13 +278,18 @@ void start_server() {
     // Clear
     std::cout << " Try to close all client-connection.\n";
     std::cout << sockfd_server << std::endl;
+    RC rc = sm_manager->close_db();
+    if(RM_FAIL(rc)) {
+        LOG_CRITICAL("Close database failed, rc = {}", strrc(rc));
+    }
+    else {
+        std::cout << " DB has been closed.\n";
+        LOG_INFO("Database has been closed.");
+    }
     int ret = shutdown(sockfd_server, SHUT_WR);  // shut down the all or part of a full-duplex connection.
     if(ret == -1) { printf("%s\n", strerror(errno)); }
-//    assert(ret != -1);
-    sm_manager->close_db();
-    std::cout << " DB has been closed.\n";
+
     std::cout << "Server shuts down." << std::endl;
-    LOG_INFO("DB has been closed.");
     LOG_INFO("Server shuts down.");
 }
 
@@ -310,7 +315,7 @@ int main(int argc, char **argv) {
                      "Type 'help;' for help.\n"
                      "\n";
         // Database name is passed by args
-        RC rc;
+        RC rc = RC::SUCCESS;
         std::string db_name = argv[1];
         if (!disk_manager->is_dir(db_name)) {
             LOG_INFO("Database {} is not found, create a new one", db_name);
