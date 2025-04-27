@@ -163,14 +163,15 @@ class IxManager {
         disk_manager_->close_file(fd);
     }
 
-    void destroy_index(const std::string &filename, const std::vector<ColMeta>& index_cols) {
-        std::string ix_name = get_index_name(filename, index_cols);
-        disk_manager_->destroy_file(ix_name);
-    }
+    // void destroy_index(const std::string &filename, const std::vector<ColMeta>& index_cols) {
+    //     std::string ix_name = get_index_name(filename, index_cols);
+    //     disk_manager_->destroy_file(ix_name);
+    // }
 
-    void destroy_index(const std::string &filename, const std::vector<std::string>& index_cols) {
-        std::string ix_name = get_index_name(filename, index_cols);
-        disk_manager_->destroy_file(ix_name);
+    RC destroy_index(const std::string &ix_name) {
+        RC rc = RC::SUCCESS;
+        rc=disk_manager_->destroy_file(ix_name);
+        return rc;
     }
 
     // 注意这里打开文件，创建并返回了index file handle的指针

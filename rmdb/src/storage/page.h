@@ -58,6 +58,7 @@ class Page {
     ~Page() = default;
 
     PageId get_page_id() const { return id_; }
+    page_id_t get_page_no() const { return id_.page_no; }
 
     inline char *get_data() { return data_; }
 

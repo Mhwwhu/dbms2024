@@ -20,6 +20,7 @@ See the Mulan PSL v2 for more details. */
 #include "stmt/txn_commit_stmt.h"
 #include "stmt/txn_abort_stmt.h"
 #include "stmt/create_index_stmt.h"
+#include "stmt/drop_index_stmt.h"
 #include "common/context.h"
 
 /**
@@ -118,6 +119,10 @@ RC Analyze::do_analyze(std::shared_ptr<ast::TreeNode> root, std::shared_ptr<IStm
     }
     if(auto node = std::dynamic_pointer_cast<ast::CreateIndex>(root)) {
         rc = CreateIndexStmt::create(sm_manager_, node, stmt);
+        return rc;
+    }
+    if(auto node = std::dynamic_pointer_cast<ast::DropIndex>(root)) {
+        rc = DropIndexStmt::create(sm_manager_, node, stmt);
         return rc;
     }
     if(auto node = std::dynamic_pointer_cast<ast::DeleteNode>(root)) {

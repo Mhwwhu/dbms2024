@@ -447,6 +447,7 @@ RC IxIndexHandle::insert_into_parent(IxNodeHandle *old_node, const char *key, Ix
  * @param (key, value) 要插入的键值对
  * @param transaction 事务指针
  * @return page_id_t 插入到的叶结点的page_no
+ * @details pg_id没用 added by zxr
  */
 RC IxIndexHandle::insert_entry(const char *key, const Rid &value, Transaction *transaction , page_id_t& pg_id) {
     // Todo:
@@ -493,16 +494,17 @@ RC IxIndexHandle::insert_entry(const char *key, const Rid &value, Transaction *t
  * @param key 要删除的key值
  * @param transaction 事务指针
  */
-bool IxIndexHandle::delete_entry(const char *key, Transaction *transaction) {
+RC IxIndexHandle::delete_entry(const char *key, Transaction *transaction) {
     // Todo:
     // 1. 获取该键值对所在的叶子结点
     // 2. 在该叶子结点中删除键值对
     // 3. 如果删除成功需要调用CoalesceOrRedistribute来进行合并或重分配操作，并根据函数返回结果判断是否有结点需要删除
     // 4. 如果需要并发，并且需要删除叶子结点，则需要在事务的delete_page_set中添加删除结点的对应页面；记得处理并发的上锁
-    
+    RC rc = RC::SUCCESS;
     auto [leaf_node, root_is_latched] = find_leaf_page(key, Operation::DELETE, transaction, false);
     if (leaf_node == nullptr) {
-        return false;
+        LOG_WARN("IN INDEX : leaf node not found");
+        return RC::INTERNAL;
     }
     
     // 2. 在该叶子结点中删除键值对
@@ -517,18 +519,18 @@ bool IxIndexHandle::delete_entry(const char *key, Transaction *transaction) {
         // 4. 如果需要并发，并且需要删除叶子结点，则需要在事务的delete_page_set中添加删除结点的对应页面；记得处理并发的上锁
         if (transaction != nullptr && node_need_delete && leaf_node->is_leaf_page()) {
             transaction->append_index_deleted_page(leaf_node->get_page());
-            
             //要pin吗？
-
         }
     }
 
-
     buffer_pool_manager_->unpin_page(leaf_node->get_page_id(), true);
-    delete leaf_node;
-
-    return old_size - new_size;
-
+    //delete leaf_node;
+    if(old_size - new_size)rc = RC::SUCCESS; 
+    else {
+        rc = RC::INTERNAL;
+        LOG_WARN("Delete index item fail");
+    }
+    return rc;
 }
 
 /**

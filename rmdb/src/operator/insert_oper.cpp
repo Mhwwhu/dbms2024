@@ -31,7 +31,45 @@ RC InsertOper::open(Context* ctx)
         rc = file_handle->insert_record(record->data, rid, ctx);
         if(RM_FAIL(rc)) return rc;
 
-        // TODO: 插入索引
+
+         // 获取表的索引元数据
+         const auto& indexes = table_meta_.indexes;
+         for (const auto& index_meta : indexes) {
+             std::vector<Value> index_values;
+             // 收集索引列的值
+             for (const auto& col_meta : index_meta.cols) {
+                 Value val;
+                 size_t col_index = 0;
+                 // 找到列在 decl_cols_ 中的位置
+                 for (; col_index < decl_cols_.size(); ++col_index) {
+                     if (decl_cols_[col_index].name == col_meta.name) {
+                         break;
+                     }
+                 }
+                 if (col_index == decl_cols_.size()) {
+                     // 未找到列，理论上不应该发生
+                     return RC::SCHEMA_FIELD_MISSING;
+                 }
+                 // 获取元组中该列的值
+                 rc = tuple->cell_at(col_index, val);
+                 if (RM_FAIL(rc)) {
+                     return rc;
+                 }
+                 index_values.push_back(val);
+             }
+
+             auto& index_handle = ctx->sm_manager_->ihs_.at(index_meta.name);
+             // 插入索引项
+             int pg_id;//没用
+             vector<char> key;
+             for(auto val : index_values) {
+                 key.insert(key.end(), val.data(), val.data() + val.length());
+             }
+             rc = index_handle->insert_entry(key.data(), rid , ctx->txn_, pg_id);
+             if (RM_FAIL(rc)) {
+                 return rc;
+             }
+         }
     }
 
     child->close();

@@ -6,6 +6,7 @@
 #include "txn_commit_executor.h"
 #include "txn_begin_executor.h"
 #include "create_index_executor.h"
+#include "drop_index_executor.h"
 
 RC CommandExecutor::execute(Context* context)
 {
@@ -23,6 +24,11 @@ RC CommandExecutor::execute(Context* context)
     }
     case StmtType::CREATE_INDEX_STMT: {
         CreateIndexExecutor executor;
+        rc = executor.execute(context);
+        break;
+    }
+    case StmtType::DROP_INDEX_STMT: {
+        DropIndexExecutor executor;
         rc = executor.execute(context);
         break;
     }

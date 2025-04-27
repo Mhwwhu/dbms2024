@@ -147,7 +147,7 @@ ddl:
     {
         $$ = std::make_shared<DescTable>($2);
     }
-     |   CREATE INDEX tbName '(' colNameList ')'
+    |   CREATE INDEX tbName '(' colNameList ')'
     {
         $$ = std::make_shared<CreateIndex>($3, $5);
     }

@@ -246,7 +246,23 @@ RC SmManager::drop_table(const std::string& tab_name, Context* context) {
     if(RM_FAIL(rc = rm_manager_->close_file(fhs_.at(tab_name).get()))) return rc;
     if(RM_FAIL(rc = rm_manager_->destroy_file(tab_path))) return rc;
 
-    // TODO: 还要删除与table相关的所有索引
+    TabMeta& tab_meta = db_.tabs_.at(tab_name);
+    std::vector<IndexMeta> indexes = tab_meta.indexes;
+    for (const auto& index_meta : indexes) {
+        std::string index_name = index_meta.name;
+
+        if (ihs_.find(index_name) != ihs_.end()) {
+            if (RM_FAIL(rc = ix_manager_->close_index(ihs_.at(index_name).get()))) {
+                return rc;
+            }
+            ihs_.erase(index_name);
+        }
+  
+        if (RM_FAIL(rc = ix_manager_->destroy_index(index_name))) {
+            return rc;
+        }
+    }
+    tab_meta.indexes.clear();
 
     fhs_.erase(tab_name);
     db_.tabs_.erase(tab_name);
@@ -322,7 +338,55 @@ RC SmManager::create_index( TabMeta& tab_meta, const std::vector<ColMeta>& col_m
  * @param {Context*} context
  */
 RC SmManager::drop_index(const std::string& tab_name, const std::vector<std::string>& col_names, Context* context) {
-    return RC::UNIMPLEMENTED;
+    RC rc = RC::SUCCESS;
+
+    // 检查表格是否存在
+    if (!db_.is_table(tab_name)) {
+        return RC::SCHEMA_TABLE_NOT_EXIST;
+    }   
+
+    TabMeta& tab_meta = db_.tabs_.at(tab_name);
+    std::vector<IndexMeta>& indexes = tab_meta.indexes;
+    std::string index_name_to_delete;
+    bool index_found = false;
+
+    // 查找要删除的索引
+    for (auto it = indexes.begin(); it != indexes.end(); ++it) {
+        std::vector<std::string> index_col_names;
+        for (const auto& col_meta : it->cols) {
+            index_col_names.push_back(col_meta.name);
+        }
+        if (index_col_names == col_names) {
+            index_name_to_delete = it->name;
+            indexes.erase(it);
+            index_found = true;
+            break;
+        }
+    }
+
+    if (!index_found) {
+        return RC::SCHEMA_INDEX_NOT_EXIST;
+    }
+
+    // 关闭索引句柄
+    if (ihs_.find(index_name_to_delete) != ihs_.end()) {
+        if (RM_FAIL(rc = ix_manager_->close_index(ihs_.at(index_name_to_delete).get()))) {
+            return rc;
+        }
+        ihs_.erase(index_name_to_delete);
+    }
+
+    // 删除索引文件
+    if (RM_FAIL(rc = ix_manager_->destroy_index(index_name_to_delete))) {
+        return rc;
+    }
+
+    // 刷写元数据到磁盘
+    if (RM_FAIL(rc = flush_meta())) {
+        return rc;
+    }
+
+    return RC::SUCCESS;
 }
 
 /**
@@ -331,6 +395,6 @@ RC SmManager::drop_index(const std::string& tab_name, const std::vector<std::str
  * @param {vector<ColMeta>&} 索引包含的字段元数据
  * @param {Context*} context
  */
-RC SmManager::drop_index(const std::string& tab_name, const std::vector<ColMeta>& cols, Context* context) {
-    return RC::UNIMPLEMENTED;
-}
+// RC SmManager::drop_index(const std::string& tab_name, const std::vector<ColMeta>& cols, Context* context) {
+//     return RC::UNIMPLEMENTED;
+// }

@@ -5,7 +5,9 @@ set(SOURCES create_table_stmt.cpp
             show_tables_stmt.cpp
             delete_stmt.cpp
             update_stmt.cpp
-            create_index_stmt.cpp)
+            create_index_stmt.cpp
+            drop_index_stmt.cpp
+            )
 
 add_library(stmt STATIC ${SOURCES})
 

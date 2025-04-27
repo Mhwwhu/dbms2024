@@ -78,6 +78,9 @@ RC RmFileHandle::insert_record(char *buf, Rid& rid, Context *context) {
         file_hdr_.first_free_page_no = handle.page_hdr->next_free_page_no;
     }
 
+    rid.page_no = handle.page->get_page_no();
+    rid.slot_no = slot_no;
+
     buffer_pool_manager_->unpin_page(handle.page->get_page_id(), true);
 
     return RC::SUCCESS;
