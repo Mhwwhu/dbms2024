@@ -32,6 +32,7 @@
   DEFINE_RC(RECORD_EOF)                  \
   DEFINE_RC(RECORD_NOT_EXIST)            \
   DEFINE_RC(RECORD_INVISIBLE)            \
+  DEFINE_RC(INDEX_ITEM_NOT_EXIST)         \
   DEFINE_RC(SCHEMA_DB_EXIST)             \
   DEFINE_RC(SCHEMA_DB_NOT_EXIST)         \
   DEFINE_RC(SCHEMA_DB_NOT_OPENED)        \
