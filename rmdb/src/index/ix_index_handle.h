@@ -14,6 +14,7 @@ See the Mulan PSL v2 for more details. */
 #include "transaction/transaction.h"
 #include "common/rc.h"
 #include "common/value.h"
+#include <cmath>
 
 enum class Operation { FIND = 0, INSERT, DELETE };  // 三种操作：查找、插入、删除
 
@@ -68,7 +69,7 @@ class IxNodeHandle {
 
     int get_max_size() { return file_hdr->btree_order_ ; }
 
-    int get_min_size() { return get_max_size() / 2; }
+    int get_min_size() { return (static_cast<double>(file_hdr->btree_order_) / 2) - 1; }
 
     //为什么要强转为int？ by zxr
     int key_at(int i) { return *(int *)get_key(i); }
@@ -123,7 +124,7 @@ class IxNodeHandle {
 
     void erase_pair(int pos);
 
-    int remove(const char *key);
+    RC remove(const char *key ,int& left_key );
 
     /**
      * @brief used in internal node to remove the last key in root node, and return the last child
@@ -186,6 +187,7 @@ class IxIndexHandle {
     RC insert_entry(const char *key, const Rid &value, Transaction *transaction , page_id_t& pg_id );
 
     IxNodeHandle *split(IxNodeHandle *node);
+    IxNodeHandle *split_internal(IxNodeHandle *node , std::vector<char>& up_key);
 
     RC insert_into_parent(IxNodeHandle *old_node, const char *key, IxNodeHandle *new_node, Transaction *transaction);
 
@@ -197,7 +199,7 @@ class IxIndexHandle {
     bool adjust_root(IxNodeHandle *old_root_node);
 
     void redistribute(IxNodeHandle *neighbor_node, IxNodeHandle *node, IxNodeHandle *parent, int index);
-
+    void redistribute_internal(IxNodeHandle *neighbor_node, IxNodeHandle *node, IxNodeHandle *parent, int index);
     bool coalesce(IxNodeHandle **neighbor_node, IxNodeHandle **node, IxNodeHandle **parent, int index,
                   Transaction *transaction, bool *root_is_latched);
 
@@ -221,7 +223,7 @@ class IxIndexHandle {
     IxNodeHandle *create_node();
 
     // for maintain data structure
-    void maintain_parent(IxNodeHandle *node);
+    void maintain_parent(IxNodeHandle *node ,const char*& key);
 
     void erase_leaf(IxNodeHandle *leaf);
 
