@@ -445,7 +445,7 @@ RC Planner::create_plan(std::shared_ptr<SelectStmt> stmt, std::shared_ptr<Plan>&
         // 如果只有一个表，则构建TableScanPlan或者视图/子查询的plan
         if(jointree->type == common::JoinType::NONE) {
             auto vtable = jointree->vtable;
-            switch(vtable->type) {
+            switch(vtable->type()) {
             case VirtualTabType::TABLE:
                 // 如果是table，我们先构建TableScanPlan，使用索引的检查放到rewrite部分实现，如果需要使用索引则替换为IndexScanPlan。
                 // 因为索引的使用与where子句相关，在这一步并没有获取到全面的信息。

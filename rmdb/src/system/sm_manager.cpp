@@ -197,7 +197,6 @@ RC SmManager::create_table(const std::string& tab_name, const std::vector<ColDef
     TabMeta tab;
     tab.name = tab_name;
     tab.alias_name = tab_name;
-    tab.type = common::VirtualTabType::TABLE;
     int id = 0;
     for (auto &col_def : col_defs) {
         ColMeta col(col_def.name,
@@ -211,9 +210,7 @@ RC SmManager::create_table(const std::string& tab_name, const std::vector<ColDef
         id++;
         tab.cols.push_back(col);
     }
-    for(auto col : tab.cols) {
-        tab.vcols.push_back(std::make_shared<ColMeta>(col));
-    }
+   
     curr_offset += col_defs.size() / 8 + 1;
     // Create & open record file
     int record_size = curr_offset;  // record_size就是col meta所占的大小（表的元数据也是以记录的形式进行存储的）

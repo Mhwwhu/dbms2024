@@ -44,15 +44,16 @@ static const Json::StaticString FIELD_DB_TABLES("tables");
 
 struct VirtualFieldMeta {
     std::string alias_name;
-    AttrType attr_type;
-    int len;
-    common::VirtualFieldType type;
 
     VirtualFieldMeta() = default;
-    VirtualFieldMeta(const std::string& name_, AttrType attr_type_, int len_, common::VirtualFieldType type_)
-    : alias_name(name_), attr_type(attr_type_), len(len_), type(type_) {}
+    VirtualFieldMeta(const std::string& name_)
+    : alias_name(name_) {}
 
     virtual ~VirtualFieldMeta() = default;
+
+    virtual AttrType attr_type() = 0;
+    virtual int length() = 0;
+    virtual common::VirtualFieldType field_type() = 0;
 };
 
 /* 字段元数据 */
@@ -66,10 +67,25 @@ struct ColMeta : public VirtualFieldMeta{
 
     ColMeta() = default;
     ColMeta(const std::string& name_, AttrType type_, int len_, int offset_, int id_, bool nullable_)
-    : VirtualFieldMeta(name_, type_, len_, common::VirtualFieldType::TABLE_COL),
+    : VirtualFieldMeta(name_),
      name(name_), type(type_), len(len_), offset(offset_), id(id_), nullable(nullable_) {}
 
     bool operator<(const ColMeta& other) const { return name < other.name; }
+
+    virtual AttrType attr_type() override
+    {
+        return type;
+    }
+
+    virtual int length() override
+    {
+        return len;
+    }
+
+    virtual common::VirtualFieldType field_type() override
+    {
+        return common::VirtualFieldType::TABLE_COL;
+    }
 
     Json::Value to_json() 
     {
@@ -125,10 +141,7 @@ struct ColMeta : public VirtualFieldMeta{
         id = col_id_value.asInt();
         nullable = nullable_value.asBool();
 
-        VirtualFieldMeta::alias_name = name;
-        VirtualFieldMeta::attr_type = type;
-        VirtualFieldMeta::type = common::VirtualFieldType::TABLE_COL;
-        VirtualFieldMeta::len = len;
+        alias_name = name;
 
         return RC::SUCCESS;
     }
@@ -180,20 +193,14 @@ struct IndexMeta {
 
 struct VirtualTabMeta {
     std::string alias_name;
-    std::vector<std::shared_ptr<VirtualFieldMeta>> vcols;
-    common::VirtualTabType type;
 
-    VirtualTabMeta(std::string alias, common::VirtualTabType type): alias_name(alias), type(type) {}
+    VirtualTabMeta(std::string alias): alias_name(alias) {}
     VirtualTabMeta() = default;
     virtual ~VirtualTabMeta() = default;
 
-    std::shared_ptr<VirtualFieldMeta> get_vfield(const std::string& name) 
-    {
-        for(auto vcol : vcols) {
-            if(vcol->alias_name == name) return vcol;
-        }
-        return nullptr;
-    }
+    virtual std::shared_ptr<VirtualFieldMeta> get_vfield(const std::string& name) = 0;
+    virtual std::vector<std::shared_ptr<VirtualFieldMeta>> vcols() = 0;
+    virtual common::VirtualTabType type() = 0;
 };
 
 /* 表元数据 */
@@ -208,6 +215,29 @@ struct TabMeta : public VirtualTabMeta{
     bool is_col(const std::string &col_name) const {
         auto pos = std::find_if(cols.begin(), cols.end(), [&](const ColMeta &col) { return col.name == col_name; });
         return pos != cols.end();
+    }
+
+    virtual std::shared_ptr<VirtualFieldMeta> get_vfield(const std::string& name) override
+    {
+        for(auto col : cols) {
+            if(col.alias_name == name) return std::make_shared<ColMeta>(col);
+        }
+        return nullptr;
+    }
+
+    virtual std::vector<std::shared_ptr<VirtualFieldMeta>> vcols() override
+    {
+        std::vector<std::shared_ptr<VirtualFieldMeta>> ret;
+        for(auto col : cols) {
+            auto element = std::make_shared<ColMeta>(col);
+            ret.push_back(element);
+        }
+        return ret;
+    }
+
+    virtual common::VirtualTabType type()
+    {
+        return common::VirtualTabType::TABLE;
     }
 
     /* 判断当前表上是否建有指定索引，索引包含的字段为col_names */
@@ -298,10 +328,7 @@ struct TabMeta : public VirtualTabMeta{
         }
 
         name = name_value.asCString();
-        VirtualTabMeta::alias_name = name;
-        for(auto col : cols) {
-            VirtualTabMeta::vcols.push_back(std::make_shared<ColMeta>(col));
-        }
+        alias_name = name;
 
         return RC::SUCCESS;
     }

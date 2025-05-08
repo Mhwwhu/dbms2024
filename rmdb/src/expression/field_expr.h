@@ -21,9 +21,9 @@ public:
 
     ExprType type() const override { return ExprType::FIELD; }
 
-    AttrType value_type() const override { return vfield_->attr_type; }
+    AttrType value_type() const override { return vfield_->attr_type(); }
 
-    int value_length() const override { return vfield_->len; }
+    int value_length() const override { return vfield_->length(); }
 
     std::shared_ptr<VirtualFieldMeta> vfield_meta() const { return vfield_; }
 
