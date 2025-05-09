@@ -69,7 +69,7 @@ class IxNodeHandle {
 
     int get_max_size() { return file_hdr->btree_order_ ; }
 
-    int get_min_size() { return (static_cast<double>(file_hdr->btree_order_) / 2) - 1; }
+    int get_min_size() { return ceil((static_cast<double>(file_hdr->btree_order_) / 2)) - 1; }
 
     //为什么要强转为int？ by zxr
     int key_at(int i) { return *(int *)get_key(i); }

@@ -27,6 +27,8 @@ public:
     std::shared_ptr<RmRecord> get_record() const { return record_; }
     const TabMeta& table_meta() const { return table_meta_; }
 
+    const std::string& alias_name() const { return alias_name_; }
+
 private:
     std::shared_ptr<RmRecord> record_;
     TabMeta table_meta_;

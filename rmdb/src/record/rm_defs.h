@@ -58,6 +58,7 @@ struct RmRecord {
         size = other.size;
         data = new char[size];
         memcpy(data, other.data, size);
+        rid = other.rid;
         allocated_ = true;
     };
 
@@ -65,6 +66,7 @@ struct RmRecord {
         size = other.size;
         data = new char[size];
         memcpy(data, other.data, size);
+        rid = other.rid;
         allocated_ = true;
         return *this;
     };
@@ -73,6 +75,7 @@ struct RmRecord {
         size = size_;
         data = new char[size_];
         allocated_ = true;
+        
     }
 
     RmRecord(int size_, char* data_) {

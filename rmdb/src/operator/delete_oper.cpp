@@ -16,7 +16,9 @@ RC DeleteOper::open(Context* context)
     std::vector<Rid> rids;
     std::vector<std::shared_ptr<RowTuple>> tuples;
     while(RM_SUCC(rc = child->next())) {
-        auto tuple = static_pointer_cast<RowTuple>(child->current_tuple());
+        auto cur_row_tuple = static_pointer_cast<RowTuple>(child->current_tuple());
+        auto tuple = make_shared<RowTuple>(cur_row_tuple->table_meta(), cur_row_tuple->alias_name());
+        tuple->set_record(make_shared<RmRecord>(*cur_row_tuple->get_record()));
         rids.push_back(tuple->get_record()->rid);
         tuples.push_back(tuple);
     }
@@ -65,7 +67,7 @@ RC DeleteOper::open(Context* context)
             }
 
             // 删除索引项
-
+//delete_oper.cpp:69
             rc = index_handle->delete_entry(key.data(),context->txn_);
             if (RM_FAIL(rc)) {
                 return rc;

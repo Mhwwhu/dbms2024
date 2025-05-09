@@ -190,6 +190,7 @@ int IxNodeHandle::insert(const char *key, const Rid &value) {
  *
  * @param pos 要删除键值对的位置
  */
+//ix_index_handle.cpp:194
 void IxNodeHandle::erase_pair(int pos) {
     // Todo:
     // 1. 删除该位置的key
@@ -224,6 +225,7 @@ void IxNodeHandle::erase_pair(int pos) {
  * @param key 要删除的键值对key值
  * @return 完成删除操作后的键值对数量
  */
+//ix_index_handle.cpp :229
 RC IxNodeHandle::remove(const char *key  ,int& left_key) {
     // Todo:
     // 1. 查找要删除键值对的位置
@@ -234,7 +236,8 @@ RC IxNodeHandle::remove(const char *key  ,int& left_key) {
         erase_pair(pos);
     }
     else{
-        return RC::INDEX_ITEM_NOT_EXIST;
+        LOG_WARN("Remove index item not exist");
+        return RC::SUCCESS;
     }
     left_key = get_size();
     return  RC::SUCCESS;
@@ -544,6 +547,7 @@ RC IxIndexHandle::insert_entry(const char *key, const Rid &value, Transaction *t
  * @param key 要删除的key值
  * @param transaction 事务指针
  */
+// ix_index_handle.cpp:551
 RC IxIndexHandle::delete_entry(const char *key, Transaction *transaction) {
     // Todo:
     // 1. 获取该键值对所在的叶子结点
