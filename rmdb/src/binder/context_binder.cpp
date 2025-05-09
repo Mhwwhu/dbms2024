@@ -10,7 +10,7 @@ using namespace std;
 
 void ContextBinder::wildcard_fields(std::shared_ptr<VirtualTabMeta> vtable, std::vector<std::shared_ptr<Expression>>& bound_exprs)
 {
-    for(auto vfield : vtable->vcols) {
+    for(auto vfield : vtable->vcols()) {
         auto field_expr = make_shared<FieldExpr>(vfield, vtable);
         field_expr->set_name(vfield->alias_name);
         bound_exprs.push_back(std::move(field_expr));
